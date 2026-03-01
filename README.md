@@ -13,43 +13,13 @@
 
 ## Overview
 
-**DailyNode** is a modular, self-hosted Discord bot built for intelligent automation and server engagement.
+**DailyNode** is a modular, cloud-hosted Discord productivity bot built to streamline technical interview preparation.
 
-It is fully customizable and designed with backend scalability in mind.  
-You can enable or disable features based on your server’s needs.
+Deployed on Google Cloud and designed with backend scalability in mind, it provides structured daily coding challenges, interview prompts, and automated practice workflows.
+Features can be enabled or disabled per server, allowing communities to tailor the experience to their preparation goals.
 
-DailyNode can act as:
-- A daily question engine
-- A moderation assistant
-- A scheduled content bot
-- A custom command platform
-- Or all of the above
+**/todayleetcode**
+Instantly receive today’s LeetCode challenge as a reminder or quick access prompt.
 
-This bot is self-hosted, meaning you control the infrastructure, deployment, and data persistence.
-
----
-
-## Features
-
-### 📅 Daily Content Engine
-- Scheduled daily prompts
-- Per-server configuration
-- Persistent storage
-- Timezone-aware execution
-
-### 🛠 Modular Command System
-- Load/unload feature modules
-- Scoped permissions
-- Slash command support
-- Admin-restricted configuration
-
-### 📊 Observability & Reliability
-- Structured logging
-- Retry-safe scheduling
-- Fault-tolerant architecture
-- Graceful restart recovery
-
-### 🔒 Admin Controls
-- Role-based access
-- Server-specific settings
-- Feature toggling
+**/setleetcodechannel**
+Set the designated channel where the bot will post the daily LeetCode challenge automatically.
