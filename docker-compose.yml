@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  dailynode:
+    build: .
+    container_name: dailynode-bot
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - TZ=America/New_York
+    env_file:
+      - .env
+    volumes:
+      # Mount config.json to persist daily problem data
+      - ./config.json:/app/config.json
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

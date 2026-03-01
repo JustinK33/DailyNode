@@ -40,9 +40,9 @@ const rest = new REST().setToken(useToken);
     try {
         console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
-        const data = await rest.put(Routes.applicationGuildCommands(clientId), { body: commands });
+        const data = await rest.put(Routes.applicationGuildCommands(useclientId, useguildId), { body: commands });
 
-        console.log('Successfully reloaded ${data.length} application (/) commands.');
+        console.log(`Successfully reloaded ${data.length} application (/) commands.`);
     } 
     catch (error) {
         console.error(error);

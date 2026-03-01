@@ -1,9 +1,14 @@
 import dotenv from 'dotenv';
 dotenv.config()
 
-import { fs } from 'node.fs';
-import { path } from 'node:path';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Client, GatewayIntentBits, Events, Collection, MessageFlags } from 'discord.js';
+import { initializeLeetcodeScheduler } from './utils/leetcodeScheduler.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const client = new Client({
     intents: [
@@ -16,6 +21,7 @@ const client = new Client({
 
 client.once(Events.ClientReady, (readyClient) => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+	initializeLeetcodeScheduler(client);
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -54,14 +60,16 @@ const commandsFolders = fs.readdirSync(foldersPath);
 for (const folder of commandsFolders) {
     const commandsPath = path.join(foldersPath, folder)
     const commandsFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
-    for (const folder of commandsFolders) {
+    for (const file of commandsFiles) {
         const filePath = path.join(commandsPath, file);
-        const command = require(filePath);
-        if ('data' in command && 'execute' in command) {
-            client.commands.set(command.data.name, command)
-        } else {
-            console.log('[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.');
-        }
+        import(filePath).then((imported) => {
+            const command = imported.default ?? imported;
+            if ('data' in command && 'execute' in command) {
+                client.commands.set(command.data.name, command)
+            } else {
+                console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+            }
+        });
     }
 }
 
