@@ -4,7 +4,7 @@ dotenv.config()
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Client, GatewayIntentBits, Events, Collection, MessageFlags } from 'discord.js';
+import { Client, GatewayIntentBits, Events, Collection, MessageFlags, ActivityType } from 'discord.js';
 import { initializeLeetcodeScheduler } from './utils/leetcodeScheduler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,6 +21,7 @@ const client = new Client({
 
 client.once(Events.ClientReady, (readyClient) => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+	readyClient.user.setActivity('/help', { type: ActivityType.Playing });
 	initializeLeetcodeScheduler(client);
 });
 
