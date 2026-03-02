@@ -15,7 +15,7 @@ export const data = new SlashCommandBuilder()
 			.setDescription('The channel to send daily LeetCode challenges to')
 			.setRequired(true)
 	)
-	.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+	.setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild);
 
 export async function execute(interaction) {
 	const channel = interaction.options.getChannel('channel');
