@@ -23,3 +23,6 @@ Instantly receive today’s LeetCode challenge as a reminder or quick access pro
 
 **/setleetcodechannel**
 Set the designated channel where the bot will post the daily LeetCode challenge automatically.
+
+**/help**
+Display a complete in-bot guide to commands, setup steps, and daily challenge behavior.
