@@ -19,6 +19,15 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
 	const channel = interaction.options.getChannel('channel');
+	const guildId = interaction.guildId;
+
+	if (!guildId) {
+		await interaction.reply({
+			content: '❌ This command can only be used inside a server.',
+			ephemeral: true
+		});
+		return;
+	}
 
 	try {
 		// Load existing config or create new one
@@ -27,8 +36,12 @@ export async function execute(interaction) {
 			config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 		}
 
-		// Update the channel ID
-		config.leetcodeChannelId = channel.id;
+		if (!config.leetcodeChannels || typeof config.leetcodeChannels !== 'object') {
+			config.leetcodeChannels = {};
+		}
+
+		// Store channel per guild so multiple servers can receive messages.
+		config.leetcodeChannels[guildId] = channel.id;
 
 		// Write back to config file
 		fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
@@ -38,7 +51,7 @@ export async function execute(interaction) {
 			ephemeral: true
 		});
 
-		console.log(`✅ LeetCode channel updated to ${channel.name} (${channel.id})`);
+		console.log(`✅ LeetCode channel updated for guild ${guildId} to ${channel.name} (${channel.id})`);
 	} catch (error) {
 		console.error('Error setting LeetCode channel:', error);
 		await interaction.reply({

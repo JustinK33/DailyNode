@@ -36,9 +36,14 @@ export function initializeLeetcodeScheduler(client) {
   try {
     const configPath = path.join(__dirname, '../config.json');
     const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    const channelId = config.leetcodeChannelId;
+    const configuredChannels = { ...(config.leetcodeChannels || {}) };
+
+    // Backward compatibility: migrate old single channel setting if present.
+    if (config.leetcodeChannelId && Object.keys(configuredChannels).length === 0) {
+      console.warn('⚠️  Legacy leetcodeChannelId found. Use /setleetcodechannel in each server to configure multi-server delivery.');
+    }
     
-    if (!channelId) {
+    if (Object.keys(configuredChannels).length === 0 && !config.leetcodeChannelId) {
       console.warn('⚠️  LeetCode channel not configured. Use /setleetcodechannel to set it up.');
       return;
     }
@@ -56,13 +61,6 @@ export function initializeLeetcodeScheduler(client) {
     // Schedule for every day at 12:00 PM (noon)
     const task = cron.schedule('0 12 * * *', async () => {
       try {
-        const channel = client.channels.cache.get(channelId);
-        
-        if (!channel) {
-          console.error(`❌ Could not find channel with ID: ${channelId}`);
-          return;
-        }
-
         const problem = getRandomProblem();
         const encouragement = getRandomEncouragingMessage();
 
@@ -86,8 +84,36 @@ export function initializeLeetcodeScheduler(client) {
           .setFooter({ text: 'Good luck! 🍀' })
           .setTimestamp();
 
-        await channel.send({ embeds: [embed] });
-        console.log(`✅ Sent daily LeetCode challenge: ${problem.title}`);
+        const latestConfiguredChannels = config.leetcodeChannels || {};
+        const channelIds = [
+          ...new Set([
+            ...Object.values(latestConfiguredChannels),
+            ...(config.leetcodeChannelId ? [config.leetcodeChannelId] : [])
+          ])
+        ];
+
+        if (channelIds.length === 0) {
+          console.warn('⚠️  No LeetCode channels configured. Use /setleetcodechannel in each server.');
+          return;
+        }
+
+        let sentCount = 0;
+        for (const channelId of channelIds) {
+          try {
+            const channel = await client.channels.fetch(channelId);
+            if (!channel || !channel.isTextBased()) {
+              console.error(`❌ Could not use channel with ID: ${channelId}`);
+              continue;
+            }
+
+            await channel.send({ embeds: [embed] });
+            sentCount += 1;
+          } catch (sendError) {
+            console.error(`❌ Failed to send challenge to channel ${channelId}:`, sendError);
+          }
+        }
+
+        console.log(`✅ Sent daily LeetCode challenge to ${sentCount} channel(s): ${problem.title}`);
       } catch (error) {
         console.error('❌ Error sending daily LeetCode challenge:', error);
       }
