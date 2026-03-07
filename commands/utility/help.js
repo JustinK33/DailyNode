@@ -8,42 +8,44 @@ export async function execute(interaction) {
 	const embed = new EmbedBuilder()
 		.setColor('#5865F2')
 		.setTitle('📘 DailyNode Help Center')
-		.setDescription('Welcome to **DailyNode** — your daily LeetCode practice companion. Use the commands below to configure and get challenges quickly.')
+		.setDescription('DailyNode now supports server-level and personal settings. Use the commands below to configure your workflow.')
 		.addFields(
 			{
-				name: '🧭 Available Commands',
+				name: '🛠️ Admin Commands',
 				value:
-					'• **`/todayleetcode`** — Shows today\'s challenge on demand.\n' +
-					'• **`/setleetcodechannel <channel>`** — Sets where daily challenges are posted (Manage Server required).\n' +
-					'• **`/help`** — Shows this guide.',
+					'• **`/setchannel <channel>`** — Set this server\'s daily post channel.\n' +
+					'• **`/setdifficulty <easy|medium|hard|mixed>`** — Set server daily difficulty.\n' +
+					'• **`/settime <HH:MM> <timezone>`** — Set server post schedule.\n' +
+					'• **`/serverconfig`** — View current server config.\n' +
+					'• **`/setleetcodechannel`** — Legacy alias for `/setchannel`.',
 				inline: false
 			},
 			{
-				name: '⚙️ Admin Setup (1-time)',
+				name: '👤 Personal Commands',
 				value:
-					'1. Run **`/setleetcodechannel`** and choose a channel.\n' +
-					'2. Daily challenge posts automatically at **12:00 PM (America/New_York)**.\n' +
-					'3. Members can run **`/todayleetcode`** any time to view today\'s problem.',
+					'• **`/mydifficulty [difficulty]`** — View or set your personal difficulty.\n' +
+					'• **`/remindme <HH:MM> <timezone>`** — Turn on DM reminders.\n' +
+					'• **`/reminderoff`** — Turn off DM reminders.\n' +
+					'• **`/mysettings`** — View your personal settings.\n' +
+					'• **`/myquestion`** — Your personal daily question.\n' +
+					'• **`/practice`** — Fetch a practice question instantly.',
 				inline: false
 			},
 			{
-				name: '🧠 How Daily Challenges Work',
+				name: '🧠 Notes',
 				value:
-					'• A random problem is selected from the LeetCode 150 dataset each day.\n' +
-					'• The bot stores the selected problem for the current date, so everyone sees the same daily challenge.\n' +
-					'• If no challenge is available yet, `/todayleetcode` tells you when to check back.',
+					'• Server daily posts use server settings only.\n' +
+					'• Personal settings affect only your personal commands and DM reminders.\n' +
+					'• If no setting exists, difficulty defaults to `mixed`.',
 				inline: false
 			},
 			{
-				name: '💡 Tips',
-				value:
-					'• Pin the daily challenge message in your practice channel.\n' +
-					'• Pair this with a dedicated study thread for discussion and solutions.\n' +
-					'• Use `/todayleetcode` to quickly pull the problem during standups or study sessions.',
+				name: '📌 Compatibility',
+				value: '• `/todayleetcode` still works and shows the server\'s daily question when available.',
 				inline: false
 			}
 		)
-		.setFooter({ text: 'Need setup help? Ask an admin to run /setleetcodechannel.' })
+		.setFooter({ text: 'Need setup help? Ask an admin to run /serverconfig.' })
 		.setTimestamp();
 
 	await interaction.reply({ embeds: [embed], ephemeral: true });

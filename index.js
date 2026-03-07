@@ -3,9 +3,9 @@ dotenv.config()
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Client, GatewayIntentBits, Events, Collection, MessageFlags, ActivityType } from 'discord.js';
-import { initializeLeetcodeScheduler } from './utils/leetcodeScheduler.js';
+import { createAppContext } from './services/appContext.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,14 +15,47 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.DirectMessages
+        GatewayIntentBits.DirectMessages,
+        GatewayIntentBits.MessageContent
     ]
 })
 
-client.once(Events.ClientReady, (readyClient) => {
+let appContext = null;
+
+async function loadCommands() {
+    client.commands = new Collection();
+
+    const foldersPath = path.join(__dirname, 'commands');
+    const commandFolders = fs.readdirSync(foldersPath);
+
+    for (const folder of commandFolders) {
+        const commandsPath = path.join(foldersPath, folder);
+        const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
+
+        for (const file of commandFiles) {
+            const filePath = path.join(commandsPath, file);
+            const imported = await import(pathToFileURL(filePath).href);
+            const command = imported.default ?? imported;
+
+            if ('data' in command && 'execute' in command) {
+                client.commands.set(command.data.name, command);
+            } else {
+                console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+            }
+        }
+    }
+}
+
+client.once(Events.ClientReady, async (readyClient) => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 	readyClient.user.setActivity('/help', { type: ActivityType.Playing });
-	initializeLeetcodeScheduler(client);
+
+    try {
+        appContext = await createAppContext(client);
+    } catch (error) {
+        console.error('❌ Failed to initialize application context:', error);
+        process.exit(1);
+    }
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -35,7 +68,15 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
     try {
-        await command.execute(interaction)
+        if (!appContext) {
+            await interaction.reply({
+                content: 'The bot is still initializing. Please try again in a few seconds.',
+                flags: MessageFlags.Ephemeral,
+            });
+            return;
+        }
+
+        await command.execute(interaction, appContext)
     } 
     catch (error) {
         console.error(error);
@@ -53,25 +94,5 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 });
 
-client.commands = new Collection();
-
-const foldersPath = path.join(__dirname, 'commands');
-const commandsFolders = fs.readdirSync(foldersPath);
-
-for (const folder of commandsFolders) {
-    const commandsPath = path.join(foldersPath, folder)
-    const commandsFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
-    for (const file of commandsFiles) {
-        const filePath = path.join(commandsPath, file);
-        import(filePath).then((imported) => {
-            const command = imported.default ?? imported;
-            if ('data' in command && 'execute' in command) {
-                client.commands.set(command.data.name, command)
-            } else {
-                console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
-            }
-        });
-    }
-}
-
+await loadCommands();
 client.login(process.env.DISCORD_TOKEN);

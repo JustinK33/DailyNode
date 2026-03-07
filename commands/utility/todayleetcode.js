@@ -1,34 +1,30 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const configPath = path.join(__dirname, '../../config.json');
+import { getDateInTimezone } from '../../lib/time.js';
 
 export const data = new SlashCommandBuilder()
 	.setName('todayleetcode')
 	.setDescription('Get a reminder of today\'s LeetCode challenge');
 
-export async function execute(interaction) {
+export async function execute(interaction, appContext) {
 	try {
-		const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-		const problem = config.dailyProblem;
-		const problemDate = config.dailyProblemDate;
-
-		if (!problem) {
+		if (!interaction.guildId) {
 			await interaction.reply({
-				content: '❌ No LeetCode problem has been set for today yet. Try again later!',
+				content: 'Use `/myquestion` for your personal question in DMs or outside servers.',
 				ephemeral: true
 			});
 			return;
 		}
 
-		// Check if the saved problem is from today
-		const today = new Date().toISOString().split('T')[0];
-		if (problemDate !== today) {
+		const settings = await appContext.services.settingsService.getGuildSettings(interaction.guildId);
+		const today = getDateInTimezone(new Date(), settings.timezone);
+		const problem = await appContext.services.serverChallengeService.getGuildQuestionForDate(
+			interaction.guildId,
+			today
+		);
+
+		if (!problem) {
 			await interaction.reply({
-				content: '⏰ The daily problem will be sent at 12:00 PM. Check back then for a fresh challenge!',
+				content: '⏰ No server daily question has been posted yet for today. Check back at the configured server time.',
 				ephemeral: true
 			});
 			return;
@@ -40,7 +36,7 @@ export async function execute(interaction) {
 			.addFields(
 				{ name: 'Problem', value: `**${problem.title}**`, inline: false },
 				{ name: 'Difficulty', value: problem.difficulty, inline: true },
-				{ name: 'Problem ID', value: `#${problem.id}`, inline: true },
+				{ name: 'Problem ID', value: `#${problem.source_id}`, inline: true },
 				{ name: 'Link', value: `[Solve on LeetCode](${problem.link})`, inline: false }
 			)
 			.setFooter({ text: 'Good luck! 🍀' })

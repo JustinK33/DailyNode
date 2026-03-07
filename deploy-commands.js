@@ -3,7 +3,6 @@ dotenv.config()
 
 const useToken = process.env.DISCORD_TOKEN
 const useclientId = process.env.clientId
-const useguildId = process.env.guildId
 
 import { REST, Routes } from 'discord.js';
 import fs from 'node:fs';

@@ -1,10 +1,4 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const configPath = path.join(__dirname, '../../config.json');
 
 export const data = new SlashCommandBuilder()
 	.setName('setleetcodechannel')
@@ -17,7 +11,7 @@ export const data = new SlashCommandBuilder()
 	)
 	.setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild);
 
-export async function execute(interaction) {
+export async function execute(interaction, appContext) {
 	const channel = interaction.options.getChannel('channel');
 	const guildId = interaction.guildId;
 
@@ -30,24 +24,10 @@ export async function execute(interaction) {
 	}
 
 	try {
-		// Load existing config or create new one
-		let config = {};
-		if (fs.existsSync(configPath)) {
-			config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-		}
-
-		if (!config.leetcodeChannels || typeof config.leetcodeChannels !== 'object') {
-			config.leetcodeChannels = {};
-		}
-
-		// Store channel per guild so multiple servers can receive messages.
-		config.leetcodeChannels[guildId] = channel.id;
-
-		// Write back to config file
-		fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
+		await appContext.services.settingsService.upsertGuildChannel(guildId, channel.id);
 
 		await interaction.reply({
-			content: `✅ LeetCode daily challenge channel set to ${channel}!`,
+			content: `✅ LeetCode daily challenge channel set to ${channel}!\nUse \`/setchannel\` moving forward.`,
 			ephemeral: true
 		});
 
