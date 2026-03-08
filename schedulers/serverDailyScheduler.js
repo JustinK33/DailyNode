@@ -38,6 +38,8 @@ export function initializeServerDailyScheduler(client, serverChallengeService) {
     } finally {
       isRunning = false;
     }
+  }, {
+    noOverlap: true
   });
 
   client[SERVER_SCHEDULER_KEY] = task;

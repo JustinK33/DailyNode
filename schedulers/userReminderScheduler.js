@@ -38,6 +38,8 @@ export function initializeUserReminderScheduler(client, userChallengeService) {
     } finally {
       isRunning = false;
     }
+  }, {
+    noOverlap: true
   });
 
   client[USER_SCHEDULER_KEY] = task;
