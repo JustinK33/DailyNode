@@ -39,7 +39,8 @@ export function initializeServerDailyScheduler(client, serverChallengeService) {
       isRunning = false;
     }
   }, {
-    noOverlap: true
+    noOverlap: true,
+    timezone: 'UTC'
   });
 
   client[SERVER_SCHEDULER_KEY] = task;

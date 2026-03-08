@@ -39,7 +39,8 @@ export function initializeUserReminderScheduler(client, userChallengeService) {
       isRunning = false;
     }
   }, {
-    noOverlap: true
+    noOverlap: true,
+    timezone: 'UTC'
   });
 
   client[USER_SCHEDULER_KEY] = task;
