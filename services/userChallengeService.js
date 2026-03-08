@@ -71,11 +71,20 @@ export class UserChallengeService {
   async sendDueReminderDMs(client, now = new Date()) {
     const users = await this.settingsService.listUsersWithRemindersEnabled();
 
+    let scannedUsers = 0;
+    let dueUsers = 0;
+    let alreadySentToday = 0;
     let sentCount = 0;
+    let failedCount = 0;
+
     for (const userSettings of users) {
+      scannedUsers += 1;
+
       if (!isDueAtMinute(now, userSettings.timezone, userSettings.reminder_time)) {
         continue;
       }
+
+      dueUsers += 1;
 
       const localDate = getDateInTimezone(now, userSettings.timezone);
       const alreadySent = await this.getUserQuestionForDate(
@@ -85,6 +94,7 @@ export class UserChallengeService {
       );
 
       if (alreadySent) {
+        alreadySentToday += 1;
         continue;
       }
 
@@ -110,6 +120,7 @@ export class UserChallengeService {
         });
         sentCount += 1;
       } catch (error) {
+        failedCount += 1;
         await this.recordUserHistory({
           userId: userSettings.user_id,
           questionId: question.id,
@@ -121,7 +132,7 @@ export class UserChallengeService {
       }
     }
 
-    return { sentCount };
+    return { scannedUsers, dueUsers, alreadySentToday, sentCount, failedCount };
   }
 
   async getUserQuestionForDate(userId, localDate, source) {

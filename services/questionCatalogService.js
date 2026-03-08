@@ -1,4 +1,4 @@
-import fs from 'node:fs';
+import fs from 'node:fs/promises';
 
 export class QuestionCatalogService {
   constructor(dbPool, datasetPath) {
@@ -6,8 +6,8 @@ export class QuestionCatalogService {
     this.datasetPath = datasetPath;
   }
 
-  loadDataset() {
-    const raw = fs.readFileSync(this.datasetPath, 'utf8');
+  async loadDataset() {
+    const raw = await fs.readFile(this.datasetPath, 'utf8');
     const parsed = JSON.parse(raw);
 
     if (!Array.isArray(parsed)) {
@@ -18,7 +18,7 @@ export class QuestionCatalogService {
   }
 
   async syncQuestionsFromFile() {
-    const questions = this.loadDataset();
+    const questions = await this.loadDataset();
 
     for (const question of questions) {
       const normalizedDifficulty = String(question.difficulty || '').toLowerCase();

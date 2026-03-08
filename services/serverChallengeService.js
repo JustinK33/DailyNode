@@ -139,14 +139,23 @@ export class ServerChallengeService {
   async runDueGuildChallenges(client, now = new Date()) {
     const guildSettings = await this.settingsService.listGuildSettingsWithChannels();
 
+    let scannedGuilds = 0;
+    let dueGuilds = 0;
+    let alreadyPosted = 0;
     let sentCount = 0;
+
     for (const settings of guildSettings) {
+      scannedGuilds += 1;
+
       if (!isDueAtMinute(now, settings.timezone, settings.post_time)) {
         continue;
       }
 
+      dueGuilds += 1;
+
       const localDate = getDateInTimezone(now, settings.timezone);
       if (await this.hasGuildDailyForDate(settings.guild_id, localDate)) {
+        alreadyPosted += 1;
         continue;
       }
 
@@ -156,6 +165,6 @@ export class ServerChallengeService {
       }
     }
 
-    return { sentCount };
+    return { scannedGuilds, dueGuilds, alreadyPosted, sentCount };
   }
 }
