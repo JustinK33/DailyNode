@@ -81,104 +81,128 @@ export class ServerChallengeService {
   }
 
   async hasGuildDailyForDate(guildId, localDate) {
-    const result = await this.dbPool.query(
-      `select id
-       from guild_question_history
-       where guild_id = $1 and question_date = $2 and selection_mode = 'daily'
-       limit 1`,
-      [guildId, localDate]
-    );
+    try {
+      const result = await this.dbPool.query(
+        `select id
+         from guild_question_history
+         where guild_id = $1 and question_date = $2 and selection_mode = 'daily'
+         limit 1`,
+        [guildId, localDate]
+      );
 
-    return result.rowCount > 0;
+      return result.rowCount > 0;
+    } catch (err) {
+      console.error(`[ServerChallengeService] Error checking guild daily for date: ${err.message}`);
+      throw err;
+    }
   }
 
   async getGuildQuestionForDate(guildId, localDate) {
-    const result = await this.dbPool.query(
-      `select q.*
-       from guild_question_history gh
-       join questions q on q.id = gh.question_id
-       where gh.guild_id = $1 and gh.question_date = $2 and gh.selection_mode = 'daily'
-       limit 1`,
-      [guildId, localDate]
-    );
+    try {
+      const result = await this.dbPool.query(
+        `select q.*
+         from guild_question_history gh
+         join questions q on q.id = gh.question_id
+         where gh.guild_id = $1 and gh.question_date = $2 and gh.selection_mode = 'daily'
+         limit 1`,
+        [guildId, localDate]
+      );
 
-    return result.rows[0] || null;
+      return result.rows[0] || null;
+    } catch (err) {
+      console.error(`[ServerChallengeService] Error getting guild question for date: ${err.message}`);
+      throw err;
+    }
   }
 
   async postDailyChallengeForGuild(client, guildId, now = new Date()) {
-    const settings = await this.settingsService.getGuildSettings(guildId);
-
-    if (!settings.channel_id) {
-      return { skipped: true, reason: 'no-channel' };
-    }
-
-    const localDate = getDateInTimezone(now, settings.timezone);
-    const existing = await this.getGuildQuestionForDate(guildId, localDate);
-
-    const question =
-      existing ||
-      (await this.questionSelectionService.selectQuestion({
-        difficulty: settings.difficulty,
-        excludeSourceIds: await this.questionSelectionService.listRecentGuildQuestionIds(guildId)
-      }));
-
-    const embed = this.createEmbed(question, randomMessage());
-
     try {
-      const channel = await client.channels.fetch(settings.channel_id);
-      if (!channel || !channel.isTextBased()) {
+      const settings = await this.settingsService.getGuildSettings(guildId);
+
+      if (!settings.channel_id) {
+        return { skipped: true, reason: 'no-channel' };
+      }
+
+      const localDate = getDateInTimezone(now, settings.timezone);
+      const existing = await this.getGuildQuestionForDate(guildId, localDate);
+
+      const question =
+        existing ||
+        (await this.questionSelectionService.selectQuestion({
+          difficulty: settings.difficulty,
+          question_set: settings.question_set,
+          excludeSourceIds: await this.questionSelectionService.listRecentGuildQuestionIds(guildId)
+        }));
+
+      const embed = this.createEmbed(question, randomMessage());
+
+      try {
+        const channel = await client.channels.fetch(settings.channel_id);
+        if (!channel || !channel.isTextBased()) {
+          await this.recordGuildHistory({
+            guildId,
+            questionId: question.id,
+            localDate,
+            channelId: settings.channel_id,
+            success: false,
+            error: 'Configured channel is not text-based or no longer exists.'
+          });
+          return { skipped: true, reason: 'invalid-channel' };
+        }
+
+        await channel.send({ embeds: [embed] });
+
+        if (!existing) {
+          await this.recordGuildHistory({
+            guildId,
+            questionId: question.id,
+            localDate,
+            channelId: settings.channel_id,
+            success: true
+          });
+        }
+
+        return { sent: true, question };
+      } catch (error) {
         await this.recordGuildHistory({
           guildId,
           questionId: question.id,
           localDate,
           channelId: settings.channel_id,
           success: false,
-          error: 'Configured channel is not text-based or no longer exists.'
+          error: error?.message || 'Unknown delivery failure'
         });
-        return { skipped: true, reason: 'invalid-channel' };
+
+        return { skipped: true, reason: 'send-failed', error };
       }
-
-      await channel.send({ embeds: [embed] });
-
-      if (!existing) {
-        await this.recordGuildHistory({
-          guildId,
-          questionId: question.id,
-          localDate,
-          channelId: settings.channel_id,
-          success: true
-        });
-      }
-
-      return { sent: true, question };
-    } catch (error) {
-      await this.recordGuildHistory({
-        guildId,
-        questionId: question.id,
-        localDate,
-        channelId: settings.channel_id,
-        success: false,
-        error: error?.message || 'Unknown delivery failure'
-      });
-
-      return { skipped: true, reason: 'send-failed', error };
+    } catch (err) {
+      console.error(`[ServerChallengeService] Error posting daily challenge for guild ${guildId}: ${err.message}`);
+      return { skipped: true, reason: 'error', error: err };
     }
   }
 
   async recordGuildHistory({ guildId, questionId, localDate, channelId, success, error }) {
-    await this.dbPool.query(
-      `insert into guild_question_history
-       (guild_id, question_id, question_date, selection_mode, delivery_channel_id, delivery_success, error_message)
-       values ($1, $2, $3, 'daily', $4, $5, $6)
-       on conflict (guild_id, question_date, selection_mode)
-       do update set
-         question_id = excluded.question_id,
-         delivery_channel_id = excluded.delivery_channel_id,
-         delivery_success = excluded.delivery_success,
-         error_message = excluded.error_message,
-         delivered_at = now()`,
-      [guildId, questionId, localDate, channelId, success, error || null]
-    );
+    try {
+      const result = await this.dbPool.query(
+        `insert into guild_question_history
+         (guild_id, question_id, question_date, selection_mode, delivery_channel_id, delivery_success, error_message, delivered_at)
+         values ($1, $2, $3, 'daily', $4, $5, $6, now())
+         on conflict (guild_id, question_date, selection_mode)
+         do update set
+           question_id = excluded.question_id,
+           delivery_channel_id = excluded.delivery_channel_id,
+           delivery_success = excluded.delivery_success,
+           error_message = excluded.error_message,
+           delivered_at = CASE WHEN excluded.delivery_success = true THEN now() ELSE guild_question_history.delivered_at END`,
+        [guildId, questionId, localDate, channelId, success, error || null]
+      );
+      if (!result) {
+        throw new Error('Failed to record guild history');
+      }
+    } catch (err) {
+      console.error(`[ServerChallengeService] Error recording guild history: ${err.message}`);
+      throw err;
+    }
   }
 
   async runDueGuildChallenges(client, now = new Date()) {

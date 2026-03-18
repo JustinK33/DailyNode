@@ -1,4 +1,5 @@
 import path from 'node:path';
+import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { runMigrations } from '../db/migrator.js';
 import { dbPool, verifyDatabaseConnection } from '../db/pool.js';
@@ -13,6 +14,9 @@ import { startEventLoopMonitor } from '../utils/runtimeMonitor.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Question set files to load
+const QUESTION_SET_FILES = ['blind75.json', 'neetcode150.json', 'neetcode250.json'];
+
 export async function createAppContext(client) {
   const bootStart = Date.now();
   console.log('[BOOT] Starting application context initialization.');
@@ -25,18 +29,32 @@ export async function createAppContext(client) {
   await runMigrations();
   console.log(`[BOOT] Migrations completed in ${Date.now() - migrationStart}ms.`);
 
-  const datasetPath = path.join(__dirname, '../data/leetcode150.json');
-
   const settingsService = new SettingsService(dbPool);
-  const questionCatalogService = new QuestionCatalogService(dbPool, datasetPath);
   const questionSelectionService = new QuestionSelectionService(dbPool);
   const serverChallengeService = new ServerChallengeService(settingsService, questionSelectionService, dbPool);
   const userChallengeService = new UserChallengeService(settingsService, questionSelectionService, dbPool);
 
+  // Sync all question sets
   const catalogSyncStart = Date.now();
-  const syncInfo = await questionCatalogService.syncQuestionsFromFile();
+  let totalSynced = 0;
+  const dataDir = path.join(__dirname, '../data');
+
+  for (const filename of QUESTION_SET_FILES) {
+    const datasetPath = path.join(dataDir, filename);
+    try {
+      const questionCatalogService = new QuestionCatalogService(dbPool, datasetPath);
+      const syncInfo = await questionCatalogService.syncQuestionsFromFile();
+      if (!syncInfo || typeof syncInfo.syncedCount !== 'number') {
+        throw new Error('Invalid sync response');
+      }
+      console.log(`[BOOT] Synced ${syncInfo.syncedCount} questions from ${filename} (question_set: ${syncInfo.questionSet})`);
+      totalSynced += syncInfo.syncedCount;
+    } catch (err) {
+      console.error(`[BOOT] Error syncing ${filename}: ${err.message}`);
+    }
+  }
   console.log(
-    `[BOOT] Question catalog synced (${syncInfo.syncedCount} records processed) in ${Date.now() - catalogSyncStart}ms.`
+    `[BOOT] Question catalog synced (${totalSynced} total records processed) in ${Date.now() - catalogSyncStart}ms.`
   );
 
   startEventLoopMonitor();
@@ -52,7 +70,6 @@ export async function createAppContext(client) {
     dbPool,
     services: {
       settingsService,
-      questionCatalogService,
       questionSelectionService,
       serverChallengeService,
       userChallengeService
