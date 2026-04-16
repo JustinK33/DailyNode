@@ -131,7 +131,11 @@ export class ServerChallengeService {
         (await this.questionSelectionService.selectQuestion({
           difficulty: settings.difficulty,
           question_set: settings.question_set,
-          excludeSourceIds: await this.questionSelectionService.listRecentGuildQuestionIds(guildId)
+          excludeSourceIds: await this.questionSelectionService.listRecentGuildQuestionIds(
+            guildId,
+            settings.question_set,
+            settings.difficulty
+          )
         }));
 
       const embed = this.createEmbed(question, randomMessage());

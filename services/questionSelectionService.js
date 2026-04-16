@@ -1,4 +1,9 @@
-import { DEFAULT_DIFFICULTY, DEFAULT_QUESTION_SET, normalizeDifficulty } from '../lib/constants.js';
+import {
+  DEFAULT_DIFFICULTY,
+  DEFAULT_QUESTION_SET,
+  normalizeDifficulty,
+  normalizeQuestionSet
+} from '../lib/constants.js';
 
 function randomItem(items) {
   return items[Math.floor(Math.random() * items.length)];
@@ -9,16 +14,28 @@ export class QuestionSelectionService {
     this.dbPool = dbPool;
   }
 
-  async listRecentGuildQuestionIds(guildId, limit = 30) {
+  async listRecentGuildQuestionIds(guildId, questionSet, difficulty = DEFAULT_DIFFICULTY) {
     try {
+      const normalizedQuestionSet = normalizeQuestionSet(questionSet || DEFAULT_QUESTION_SET);
+      const normalizedDifficulty = normalizeDifficulty(difficulty || DEFAULT_DIFFICULTY);
+      const limit = await this.getQuestionPoolSize(normalizedQuestionSet, normalizedDifficulty);
+
+      if (limit === 0) {
+        return [];
+      }
+
       const result = await this.dbPool.query(
-        `select q.source_id
-         from guild_question_history gh
-         join questions q on q.id = gh.question_id
-         where gh.guild_id = $1
-         order by gh.delivered_at desc
-         limit $2`,
-        [guildId, limit]
+        `select source_id
+         from (
+           select q.source_id as source_id, max(gh.delivered_at) as last_delivered_at
+           from guild_question_history gh
+           join questions q on q.id = gh.question_id
+           where gh.guild_id = $1 and q.question_set = $2
+           group by q.source_id
+         ) recent_questions
+         order by last_delivered_at desc
+         limit $3`,
+        [guildId, normalizedQuestionSet, limit]
       );
 
       return (result.rows || []).map((row) => row.source_id);
@@ -28,16 +45,28 @@ export class QuestionSelectionService {
     }
   }
 
-  async listRecentUserQuestionIds(userId, limit = 30) {
+  async listRecentUserQuestionIds(userId, questionSet, difficulty = DEFAULT_DIFFICULTY) {
     try {
+      const normalizedQuestionSet = normalizeQuestionSet(questionSet || DEFAULT_QUESTION_SET);
+      const normalizedDifficulty = normalizeDifficulty(difficulty || DEFAULT_DIFFICULTY);
+      const limit = await this.getQuestionPoolSize(normalizedQuestionSet, normalizedDifficulty);
+
+      if (limit === 0) {
+        return [];
+      }
+
       const result = await this.dbPool.query(
-        `select q.source_id
-         from user_question_history uh
-         join questions q on q.id = uh.question_id
-         where uh.user_id = $1
-         order by uh.delivered_at desc
-         limit $2`,
-        [userId, limit]
+        `select source_id
+         from (
+           select q.source_id as source_id, max(uh.delivered_at) as last_delivered_at
+           from user_question_history uh
+           join questions q on q.id = uh.question_id
+           where uh.user_id = $1 and q.question_set = $2
+           group by q.source_id
+         ) recent_questions
+         order by last_delivered_at desc
+         limit $3`,
+        [userId, normalizedQuestionSet, limit]
       );
 
       return (result.rows || []).map((row) => row.source_id);
@@ -47,10 +76,31 @@ export class QuestionSelectionService {
     }
   }
 
+  async getQuestionPoolSize(questionSet, difficulty = DEFAULT_DIFFICULTY) {
+    try {
+      const normalizedQuestionSet = normalizeQuestionSet(questionSet || DEFAULT_QUESTION_SET);
+      const normalizedDifficulty = normalizeDifficulty(difficulty || DEFAULT_DIFFICULTY);
+
+      let query = 'select count(*)::int as count from questions where question_set = $1';
+      const params = [normalizedQuestionSet];
+
+      if (normalizedDifficulty !== DEFAULT_DIFFICULTY) {
+        params.push(normalizedDifficulty);
+        query += ` and difficulty = $${params.length}`;
+      }
+
+      const result = await this.dbPool.query(query, params);
+      return Number(result.rows?.[0]?.count || 0);
+    } catch (err) {
+      console.error(`[QuestionSelectionService] Error counting questions in pool: ${err.message}`);
+      throw err;
+    }
+  }
+
   async selectQuestion({ difficulty, question_set, excludeSourceIds = [] }) {
     try {
       const normalizedDifficulty = normalizeDifficulty(difficulty || DEFAULT_DIFFICULTY);
-      const normalizedQuestionSet = question_set || DEFAULT_QUESTION_SET;
+      const normalizedQuestionSet = normalizeQuestionSet(question_set || DEFAULT_QUESTION_SET);
 
       const exactRows = await this.selectByDifficulty(normalizedDifficulty, normalizedQuestionSet, excludeSourceIds);
       if (exactRows.length > 0) {
@@ -59,12 +109,19 @@ export class QuestionSelectionService {
         return question;
       }
 
-      const fallbackRows = await this.selectByDifficulty(DEFAULT_DIFFICULTY, DEFAULT_QUESTION_SET, []);
-      if (fallbackRows.length === 0) {
+      const fallbackRows = await this.selectByDifficulty(normalizedDifficulty, normalizedQuestionSet, []);
+      if (fallbackRows.length > 0) {
+        const question = randomItem(fallbackRows);
+        this._validateQuestion(question);
+        return question;
+      }
+
+      const defaultRows = await this.selectByDifficulty(DEFAULT_DIFFICULTY, DEFAULT_QUESTION_SET, []);
+      if (defaultRows.length === 0) {
         throw new Error('No questions available in database.');
       }
 
-      const question = randomItem(fallbackRows);
+      const question = randomItem(defaultRows);
       this._validateQuestion(question);
       return question;
     } catch (err) {

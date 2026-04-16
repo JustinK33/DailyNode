@@ -1,6 +1,23 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+function dedupeQuestionsById(questions) {
+  const seenIds = new Set();
+
+  return questions.filter((question) => {
+    if (!question || typeof question.id === 'undefined' || question.id === null) {
+      return false;
+    }
+
+    if (seenIds.has(question.id)) {
+      return false;
+    }
+
+    seenIds.add(question.id);
+    return true;
+  });
+}
+
 export class QuestionCatalogService {
   constructor(dbPool, datasetPath) {
     this.dbPool = dbPool;
@@ -15,7 +32,7 @@ export class QuestionCatalogService {
       throw new Error('LeetCode dataset must be an array.');
     }
 
-    return parsed;
+    return dedupeQuestionsById(parsed);
   }
 
   // Extract question_set from filename (e.g., "blind75.json" -> "blind75")
@@ -27,6 +44,7 @@ export class QuestionCatalogService {
   async syncQuestionsFromFile() {
     const questions = await this.loadDataset();
     const questionSet = this.getQuestionSetFromPath();
+    let syncedCount = 0;
 
     for (const question of questions) {
       const normalizedDifficulty = String(question.difficulty || '').toLowerCase();
@@ -47,8 +65,10 @@ export class QuestionCatalogService {
            updated_at = now()`,
         [question.id, question.title, normalizedDifficulty, question.link, questionSet]
       );
+
+      syncedCount += 1;
     }
 
-    return { syncedCount: questions.length, questionSet };
+    return { syncedCount, questionSet };
   }
 }

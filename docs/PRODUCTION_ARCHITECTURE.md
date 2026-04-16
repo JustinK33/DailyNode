@@ -77,7 +77,7 @@ Compatibility commands retained:
 - `UserChallengeService`
   - personal daily question + practice question + DM reminder writes
 - `QuestionCatalogService`
-  - syncs `data/leetcode150.json` into `questions`
+  - syncs `data/neetcode150.json` into `questions`
 
 ## 5) Implementation plan in phases
 

@@ -6,10 +6,28 @@ import { EmbedBuilder } from 'discord.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+function dedupeProblemsById(problems) {
+  const seenIds = new Set();
+
+  return problems.filter((problem) => {
+    if (!problem || typeof problem.id === 'undefined' || problem.id === null) {
+      return false;
+    }
+
+    if (seenIds.has(problem.id)) {
+      return false;
+    }
+
+    seenIds.add(problem.id);
+    return true;
+  });
+}
+
 // Load LeetCode problems
 const leetcodeData = JSON.parse(
-  fs.readFileSync(path.join(__dirname, '../data/leetcode150.json'), 'utf8')
+  fs.readFileSync(path.join(__dirname, '../data/neetcode150.json'), 'utf8')
 );
+const uniqueLeetcodeData = dedupeProblemsById(leetcodeData);
 
 const encouragingMessages = [
   "You've got this! 💪 Let's solve this problem today!",
@@ -25,7 +43,7 @@ const encouragingMessages = [
 ];
 
 function getRandomProblem() {
-  return leetcodeData[Math.floor(Math.random() * leetcodeData.length)];
+  return uniqueLeetcodeData[Math.floor(Math.random() * uniqueLeetcodeData.length)];
 }
 
 function getRandomEncouragingMessage() {

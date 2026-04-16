@@ -39,20 +39,20 @@ describe('Project Structure', () => {
 });
 
 describe('LeetCode Data', () => {
-  it('should have leetcode150.json', () => {
-    const leetcodePath = path.join(__dirname, '..', 'data', 'leetcode150.json');
-    assert.ok(fs.existsSync(leetcodePath), 'leetcode150.json should exist');
+  it('should have neetcode150.json', () => {
+    const leetcodePath = path.join(__dirname, '..', 'data', 'neetcode150.json');
+    assert.ok(fs.existsSync(leetcodePath), 'neetcode150.json should exist');
   });
 
-  it('should have valid JSON in leetcode150.json', () => {
-    const leetcodePath = path.join(__dirname, '..', 'data', 'leetcode150.json');
+  it('should have valid JSON in neetcode150.json', () => {
+    const leetcodePath = path.join(__dirname, '..', 'data', 'neetcode150.json');
     const data = JSON.parse(fs.readFileSync(leetcodePath, 'utf8'));
     assert.ok(Array.isArray(data), 'leetcode data should be an array');
     assert.ok(data.length > 0, 'leetcode data should not be empty');
   });
 
-  it('should have properly formatted leetcode problems', () => {
-    const leetcodePath = path.join(__dirname, '..', 'data', 'leetcode150.json');
+  it('should have properly formatted neetcode problems with valid links', () => {
+    const leetcodePath = path.join(__dirname, '..', 'data', 'neetcode150.json');
     const data = JSON.parse(fs.readFileSync(leetcodePath, 'utf8'));
     
     data.forEach((problem, index) => {
@@ -60,6 +60,10 @@ describe('LeetCode Data', () => {
       assert.ok(problem.title, `Problem at index ${index} should have a title`);
       assert.ok(problem.difficulty, `Problem at index ${index} should have a difficulty`);
       assert.ok(problem.link, `Problem at index ${index} should have a link`);
+      assert.ok(
+        typeof problem.link === 'string' && problem.link.startsWith('https://leetcode.com/problems/'),
+        `Problem at index ${index} should link to a LeetCode problem`
+      );
     });
   });
 });

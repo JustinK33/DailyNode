@@ -36,7 +36,11 @@ export class UserChallengeService {
       const question = await this.questionSelectionService.selectQuestion({
         difficulty: settings.difficulty,
         question_set: settings.question_set,
-        excludeSourceIds: await this.questionSelectionService.listRecentUserQuestionIds(userId)
+        excludeSourceIds: await this.questionSelectionService.listRecentUserQuestionIds(
+          userId,
+          settings.question_set,
+          settings.difficulty
+        )
       });
 
       await this.recordUserHistory({
@@ -62,7 +66,11 @@ export class UserChallengeService {
       const question = await this.questionSelectionService.selectQuestion({
         difficulty: settings.difficulty,
         question_set: settings.question_set,
-        excludeSourceIds: await this.questionSelectionService.listRecentUserQuestionIds(userId)
+        excludeSourceIds: await this.questionSelectionService.listRecentUserQuestionIds(
+          userId,
+          settings.question_set,
+          settings.difficulty
+        )
       });
 
       await this.recordUserHistory({
@@ -114,7 +122,11 @@ export class UserChallengeService {
         const question = await this.questionSelectionService.selectQuestion({
           difficulty: userSettings.difficulty,
           question_set: userSettings.question_set,
-          excludeSourceIds: await this.questionSelectionService.listRecentUserQuestionIds(userSettings.user_id)
+          excludeSourceIds: await this.questionSelectionService.listRecentUserQuestionIds(
+            userSettings.user_id,
+            userSettings.question_set,
+            userSettings.difficulty
+          )
         });
 
         try {
