@@ -18,27 +18,34 @@ export class QuestionSelectionService {
     try {
       const normalizedQuestionSet = normalizeQuestionSet(questionSet || DEFAULT_QUESTION_SET);
       const normalizedDifficulty = normalizeDifficulty(difficulty || DEFAULT_DIFFICULTY);
-      const limit = await this.getQuestionPoolSize(normalizedQuestionSet, normalizedDifficulty);
+      const poolSize = await this.getQuestionPoolSize(normalizedQuestionSet, normalizedDifficulty);
 
-      if (limit === 0) {
+      if (poolSize === 0) {
         return [];
       }
 
-      const result = await this.dbPool.query(
-        `select source_id
-         from (
-           select q.source_id as source_id, max(gh.delivered_at) as last_delivered_at
-           from guild_question_history gh
-           join questions q on q.id = gh.question_id
-           where gh.guild_id = $1 and q.question_set = $2
-           group by q.source_id
-         ) recent_questions
-         order by last_delivered_at desc
-         limit $3`,
-        [guildId, normalizedQuestionSet, limit]
-      );
+      const rawHistoryLimit = poolSize + 1;
+      let query =
+        `select q.source_id
+         from guild_question_history gh
+         join questions q on q.id = gh.question_id
+         where gh.guild_id = $1 and q.question_set = $2`;
 
-      return (result.rows || []).map((row) => row.source_id);
+      const params = [guildId, normalizedQuestionSet];
+
+      if (normalizedDifficulty !== DEFAULT_DIFFICULTY) {
+        params.push(normalizedDifficulty);
+        query += ` and q.difficulty = $${params.length}`;
+      }
+
+      params.push(rawHistoryLimit);
+      query +=
+        `
+         order by gh.delivered_at desc
+         limit $${params.length}`;
+
+      const result = await this.dbPool.query(query, params);
+      return this.buildCurrentCycleSourceIds(result.rows || [], poolSize);
     } catch (err) {
       console.error(`[QuestionSelectionService] Error listing recent guild question IDs: ${err.message}`);
       throw err;
@@ -49,27 +56,34 @@ export class QuestionSelectionService {
     try {
       const normalizedQuestionSet = normalizeQuestionSet(questionSet || DEFAULT_QUESTION_SET);
       const normalizedDifficulty = normalizeDifficulty(difficulty || DEFAULT_DIFFICULTY);
-      const limit = await this.getQuestionPoolSize(normalizedQuestionSet, normalizedDifficulty);
+      const poolSize = await this.getQuestionPoolSize(normalizedQuestionSet, normalizedDifficulty);
 
-      if (limit === 0) {
+      if (poolSize === 0) {
         return [];
       }
 
-      const result = await this.dbPool.query(
-        `select source_id
-         from (
-           select q.source_id as source_id, max(uh.delivered_at) as last_delivered_at
-           from user_question_history uh
-           join questions q on q.id = uh.question_id
-           where uh.user_id = $1 and q.question_set = $2
-           group by q.source_id
-         ) recent_questions
-         order by last_delivered_at desc
-         limit $3`,
-        [userId, normalizedQuestionSet, limit]
-      );
+      const rawHistoryLimit = poolSize + 1;
+      let query =
+        `select q.source_id
+         from user_question_history uh
+         join questions q on q.id = uh.question_id
+         where uh.user_id = $1 and q.question_set = $2`;
 
-      return (result.rows || []).map((row) => row.source_id);
+      const params = [userId, normalizedQuestionSet];
+
+      if (normalizedDifficulty !== DEFAULT_DIFFICULTY) {
+        params.push(normalizedDifficulty);
+        query += ` and q.difficulty = $${params.length}`;
+      }
+
+      params.push(rawHistoryLimit);
+      query +=
+        `
+         order by uh.delivered_at desc
+         limit $${params.length}`;
+
+      const result = await this.dbPool.query(query, params);
+      return this.buildCurrentCycleSourceIds(result.rows || [], poolSize);
     } catch (err) {
       console.error(`[QuestionSelectionService] Error listing recent user question IDs: ${err.message}`);
       throw err;
@@ -101,17 +115,18 @@ export class QuestionSelectionService {
     try {
       const normalizedDifficulty = normalizeDifficulty(difficulty || DEFAULT_DIFFICULTY);
       const normalizedQuestionSet = normalizeQuestionSet(question_set || DEFAULT_QUESTION_SET);
+      const recentSourceIds = excludeSourceIds || [];
 
-      const exactRows = await this.selectByDifficulty(normalizedDifficulty, normalizedQuestionSet, excludeSourceIds);
+      const exactRows = await this.selectByDifficulty(normalizedDifficulty, normalizedQuestionSet, recentSourceIds);
       if (exactRows.length > 0) {
-        const question = randomItem(exactRows);
+        const question = this.pickQuestionWithRecencyWeight(exactRows, recentSourceIds);
         this._validateQuestion(question);
         return question;
       }
 
       const fallbackRows = await this.selectByDifficulty(normalizedDifficulty, normalizedQuestionSet, []);
       if (fallbackRows.length > 0) {
-        const question = randomItem(fallbackRows);
+        const question = this.pickQuestionForCycleReset(fallbackRows, recentSourceIds);
         this._validateQuestion(question);
         return question;
       }
@@ -139,6 +154,110 @@ export class QuestionSelectionService {
     }
   }
 
+  buildCurrentCycleSourceIds(rows, poolSize) {
+    const cycleSourceIds = [];
+    const seen = new Set();
+
+    for (const row of rows) {
+      const sourceId = Number(row.source_id);
+      if (!Number.isInteger(sourceId)) {
+        continue;
+      }
+
+      if (seen.has(sourceId)) {
+        break;
+      }
+
+      seen.add(sourceId);
+      cycleSourceIds.push(sourceId);
+
+      if (cycleSourceIds.length >= poolSize) {
+        break;
+      }
+    }
+
+    return cycleSourceIds;
+  }
+
+  pickQuestionForCycleReset(questions, recentSourceIds = []) {
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return null;
+    }
+
+    if (questions.length === 1) {
+      return questions[0];
+    }
+
+    if (!Array.isArray(recentSourceIds) || recentSourceIds.length === 0) {
+      return randomItem(questions);
+    }
+
+    const lastSourceId = Number(recentSourceIds[0]);
+    const isExhaustedPool = recentSourceIds.length >= questions.length;
+
+    if (!isExhaustedPool || !Number.isInteger(lastSourceId)) {
+      return this.pickQuestionWithRecencyWeight(questions, recentSourceIds);
+    }
+
+    // On cycle reset, avoid choosing yesterday's question when possible.
+    const withoutLastQuestion = questions.filter((question) => Number(question.source_id) !== lastSourceId);
+
+    if (withoutLastQuestion.length === 0) {
+      return randomItem(questions);
+    }
+
+    return randomItem(withoutLastQuestion);
+  }
+
+  pickQuestionWithRecencyWeight(questions, recentSourceIds = []) {
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return null;
+    }
+
+    if (questions.length === 1) {
+      return questions[0];
+    }
+
+    if (!Array.isArray(recentSourceIds) || recentSourceIds.length === 0) {
+      return randomItem(questions);
+    }
+
+    const recencyIndexBySourceId = new Map(
+      recentSourceIds.map((sourceId, index) => [Number(sourceId), index])
+    );
+
+    let totalWeight = 0;
+    const weightedCandidates = questions.map((question) => {
+      const sourceId = Number(question.source_id);
+      const recencyIndex = recencyIndexBySourceId.get(sourceId);
+
+      // Favor unseen questions heavily, and down-rank recently seen questions.
+      let weight = 2;
+      if (recencyIndex !== undefined) {
+        const denominator = Math.max(1, recentSourceIds.length - 1);
+        const ageRatio = recencyIndex / denominator;
+        weight = 0.1 + ageRatio * 0.9;
+      }
+
+      totalWeight += weight;
+      return { question, weight };
+    });
+
+    if (totalWeight <= 0) {
+      return randomItem(questions);
+    }
+
+    let cursor = Math.random() * totalWeight;
+    for (const candidate of weightedCandidates) {
+      cursor -= candidate.weight;
+      if (cursor <= 0) {
+        return candidate.question;
+      }
+    }
+
+    return weightedCandidates[weightedCandidates.length - 1].question;
+  }
+
   async selectByDifficulty(difficulty, questionSet, excludeSourceIds) {
     try {
       // Build dynamic query based on parameters
@@ -158,7 +277,7 @@ export class QuestionSelectionService {
       // Add exclusion filter
       if (excludeSourceIds.length > 0) {
         params.push(excludeSourceIds);
-        query += ` and source_id != ANY($${params.length}::int[])`;
+        query += ` and not (source_id = ANY($${params.length}::int[]))`;
       }
 
       const result = await this.dbPool.query(query, params);

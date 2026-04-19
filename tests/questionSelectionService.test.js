@@ -21,7 +21,7 @@ describe('QuestionSelectionService', () => {
 
         if (sql.includes('from user_question_history')) {
           return {
-            rows: [{ source_id: 101 }, { source_id: 102 }, { source_id: 103 }]
+            rows: [{ source_id: 101 }, { source_id: 102 }, { source_id: 103 }, { source_id: 102 }]
           };
         }
 
@@ -35,7 +35,7 @@ describe('QuestionSelectionService', () => {
     assert.deepEqual(ids, [101, 102, 103]);
     assert.equal(queries.length, 2);
     assert.deepEqual(queries[0].params, ['blind75']);
-    assert.deepEqual(queries[1].params, ['user-1', 'blind75', 3]);
+    assert.deepEqual(queries[1].params, ['user-1', 'blind75', 4]);
   });
 
   it('restarts selection inside the active set before falling back to the global default set', async () => {
@@ -44,7 +44,7 @@ describe('QuestionSelectionService', () => {
       async query(sql, params) {
         queries.push({ sql, params });
 
-        if (sql.includes('source_id != ANY')) {
+        if (sql.includes('not (source_id = ANY')) {
           return { rows: [] };
         }
 
@@ -75,6 +75,19 @@ describe('QuestionSelectionService', () => {
 
     assert.equal(question.source_id, 201);
     assert.equal(queries.length, 2);
+  });
+
+  it('avoids repeating yesterday question when a new cycle starts', async () => {
+    const service = new QuestionSelectionService({ query: async () => ({ rows: [] }) });
+    const question = service.pickQuestionForCycleReset(
+      [
+        { source_id: 11, id: 11, title: 'Q11', difficulty: 'easy', link: 'https://example.com/11' },
+        { source_id: 22, id: 22, title: 'Q22', difficulty: 'easy', link: 'https://example.com/22' }
+      ],
+      [11, 22]
+    );
+
+    assert.equal(question.source_id, 22);
   });
 });
 
