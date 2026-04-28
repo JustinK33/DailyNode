@@ -21,7 +21,7 @@ describe('QuestionSelectionService', () => {
 
         if (sql.includes('from user_question_history')) {
           return {
-            rows: [{ source_id: 101 }, { source_id: 102 }, { source_id: 103 }, { source_id: 102 }]
+            rows: [{ source_id: 101 }, { source_id: 102 }, { source_id: 103 }]
           };
         }
 
@@ -35,7 +35,7 @@ describe('QuestionSelectionService', () => {
     assert.deepEqual(ids, [101, 102, 103]);
     assert.equal(queries.length, 2);
     assert.deepEqual(queries[0].params, ['blind75']);
-    assert.deepEqual(queries[1].params, ['user-1', 'blind75', 4]);
+    assert.deepEqual(queries[1].params, ['user-1', 'blind75', 3]);
   });
 
   it('restarts selection inside the active set before falling back to the global default set', async () => {

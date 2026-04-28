@@ -24,12 +24,13 @@ export class QuestionSelectionService {
         return [];
       }
 
-      const rawHistoryLimit = poolSize + 1;
       let query =
-        `select q.source_id
-         from guild_question_history gh
-         join questions q on q.id = gh.question_id
-         where gh.guild_id = $1 and q.question_set = $2`;
+        `select source_id
+         from (
+           select q.source_id as source_id, max(gh.delivered_at) as last_delivered_at
+           from guild_question_history gh
+           join questions q on q.id = gh.question_id
+           where gh.guild_id = $1 and q.question_set = $2`;
 
       const params = [guildId, normalizedQuestionSet];
 
@@ -38,14 +39,17 @@ export class QuestionSelectionService {
         query += ` and q.difficulty = $${params.length}`;
       }
 
-      params.push(rawHistoryLimit);
+      const cooldownWindowSize = Math.max(3, Math.ceil(poolSize / 4));
+      params.push(cooldownWindowSize);
       query +=
         `
-         order by gh.delivered_at desc
+           group by q.source_id
+         ) recent_questions
+         order by last_delivered_at desc
          limit $${params.length}`;
 
       const result = await this.dbPool.query(query, params);
-      return this.buildCurrentCycleSourceIds(result.rows || [], poolSize);
+      return (result.rows || []).map((row) => row.source_id);
     } catch (err) {
       console.error(`[QuestionSelectionService] Error listing recent guild question IDs: ${err.message}`);
       throw err;
@@ -62,12 +66,13 @@ export class QuestionSelectionService {
         return [];
       }
 
-      const rawHistoryLimit = poolSize + 1;
       let query =
-        `select q.source_id
-         from user_question_history uh
-         join questions q on q.id = uh.question_id
-         where uh.user_id = $1 and q.question_set = $2`;
+        `select source_id
+         from (
+           select q.source_id as source_id, max(uh.delivered_at) as last_delivered_at
+           from user_question_history uh
+           join questions q on q.id = uh.question_id
+           where uh.user_id = $1 and q.question_set = $2`;
 
       const params = [userId, normalizedQuestionSet];
 
@@ -76,14 +81,17 @@ export class QuestionSelectionService {
         query += ` and q.difficulty = $${params.length}`;
       }
 
-      params.push(rawHistoryLimit);
+      const cooldownWindowSize = Math.max(3, Math.ceil(poolSize / 4));
+      params.push(cooldownWindowSize);
       query +=
         `
-         order by uh.delivered_at desc
+           group by q.source_id
+         ) recent_questions
+         order by last_delivered_at desc
          limit $${params.length}`;
 
       const result = await this.dbPool.query(query, params);
-      return this.buildCurrentCycleSourceIds(result.rows || [], poolSize);
+      return (result.rows || []).map((row) => row.source_id);
     } catch (err) {
       console.error(`[QuestionSelectionService] Error listing recent user question IDs: ${err.message}`);
       throw err;
@@ -152,31 +160,6 @@ export class QuestionSelectionService {
     if (!question.id || !question.title || !question.difficulty || !question.link) {
       throw new Error(`Question missing required fields: ${JSON.stringify(question)}`);
     }
-  }
-
-  buildCurrentCycleSourceIds(rows, poolSize) {
-    const cycleSourceIds = [];
-    const seen = new Set();
-
-    for (const row of rows) {
-      const sourceId = Number(row.source_id);
-      if (!Number.isInteger(sourceId)) {
-        continue;
-      }
-
-      if (seen.has(sourceId)) {
-        break;
-      }
-
-      seen.add(sourceId);
-      cycleSourceIds.push(sourceId);
-
-      if (cycleSourceIds.length >= poolSize) {
-        break;
-      }
-    }
-
-    return cycleSourceIds;
   }
 
   pickQuestionForCycleReset(questions, recentSourceIds = []) {
