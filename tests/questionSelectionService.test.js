@@ -9,14 +9,14 @@ import { QuestionSelectionService } from '../services/questionSelectionService.j
 import { UserChallengeService } from '../services/userChallengeService.js';
 
 describe('QuestionSelectionService', () => {
-  it('uses the full active set size when collecting recent user question ids', async () => {
+  it('returns the current cycle deliveries newest-first for an in-progress cycle', async () => {
     const queries = [];
     const dbPool = {
       async query(sql, params) {
         queries.push({ sql, params });
 
         if (sql.includes('select count(*)::int as count from questions')) {
-          return { rows: [{ count: 3 }] };
+          return { rows: [{ count: 5 }] };
         }
 
         if (sql.includes('from user_question_history')) {
@@ -32,10 +32,82 @@ describe('QuestionSelectionService', () => {
     const service = new QuestionSelectionService(dbPool);
     const ids = await service.listRecentUserQuestionIds('user-1', 'blind75', 'mixed');
 
-    assert.deepEqual(ids, [101, 102, 103]);
+    assert.deepEqual(ids, [103, 102, 101]);
     assert.equal(queries.length, 2);
     assert.deepEqual(queries[0].params, ['blind75']);
-    assert.deepEqual(queries[1].params, ['user-1', 'blind75', 3]);
+    assert.deepEqual(queries[1].params, ['user-1', 'blind75']);
+  });
+
+  it('resets the exclusion list once the active set has been fully delivered', async () => {
+    const dbPool = {
+      async query(sql) {
+        if (sql.includes('select count(*)::int as count from questions')) {
+          return { rows: [{ count: 3 }] };
+        }
+        if (sql.includes('from user_question_history')) {
+          // Cycle 1 (full: 1,2,3) followed by start of cycle 2 (just 7).
+          return {
+            rows: [
+              { source_id: 1 },
+              { source_id: 2 },
+              { source_id: 3 },
+              { source_id: 7 }
+            ]
+          };
+        }
+        throw new Error(`Unexpected query: ${sql}`);
+      }
+    };
+
+    const service = new QuestionSelectionService(dbPool);
+    const ids = await service.listRecentUserQuestionIds('user-2', 'blind75', 'mixed');
+
+    assert.deepEqual(ids, [7]);
+  });
+
+  it('treats a freshly completed cycle as fully excluded so the next pick triggers a reset', async () => {
+    const dbPool = {
+      async query(sql) {
+        if (sql.includes('select count(*)::int as count from questions')) {
+          return { rows: [{ count: 3 }] };
+        }
+        if (sql.includes('from user_question_history')) {
+          return {
+            rows: [{ source_id: 1 }, { source_id: 2 }, { source_id: 3 }]
+          };
+        }
+        throw new Error(`Unexpected query: ${sql}`);
+      }
+    };
+
+    const service = new QuestionSelectionService(dbPool);
+    const ids = await service.listRecentUserQuestionIds('user-3', 'blind75', 'mixed');
+
+    assert.deepEqual(ids, [3, 2, 1]);
+  });
+
+  it('passes a difficulty filter through so easy/medium/hard cycles are independent', async () => {
+    const queries = [];
+    const dbPool = {
+      async query(sql, params) {
+        queries.push({ sql, params });
+        if (sql.includes('select count(*)::int as count from questions')) {
+          return { rows: [{ count: 4 }] };
+        }
+        if (sql.includes('from user_question_history')) {
+          return { rows: [{ source_id: 50 }, { source_id: 51 }] };
+        }
+        throw new Error(`Unexpected query: ${sql}`);
+      }
+    };
+
+    const service = new QuestionSelectionService(dbPool);
+    const ids = await service.listRecentUserQuestionIds('user-4', 'neetcode150', 'easy');
+
+    assert.deepEqual(ids, [51, 50]);
+    assert.deepEqual(queries[0].params, ['neetcode150', 'easy']);
+    assert.deepEqual(queries[1].params, ['user-4', 'neetcode150', 'easy']);
+    assert.match(queries[1].sql, /q\.difficulty = \$3/);
   });
 
   it('restarts selection inside the active set before falling back to the global default set', async () => {

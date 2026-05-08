@@ -25,12 +25,10 @@ export class QuestionSelectionService {
       }
 
       let query =
-        `select source_id
-         from (
-           select q.source_id as source_id, max(gh.delivered_at) as last_delivered_at
-           from guild_question_history gh
-           join questions q on q.id = gh.question_id
-           where gh.guild_id = $1 and q.question_set = $2`;
+        `select q.source_id as source_id
+         from guild_question_history gh
+         join questions q on q.id = gh.question_id
+         where gh.guild_id = $1 and q.question_set = $2`;
 
       const params = [guildId, normalizedQuestionSet];
 
@@ -39,17 +37,10 @@ export class QuestionSelectionService {
         query += ` and q.difficulty = $${params.length}`;
       }
 
-      const cooldownWindowSize = Math.max(3, Math.ceil(poolSize / 4));
-      params.push(cooldownWindowSize);
-      query +=
-        `
-           group by q.source_id
-         ) recent_questions
-         order by last_delivered_at desc
-         limit $${params.length}`;
+      query += ' order by gh.delivered_at asc, gh.id asc';
 
       const result = await this.dbPool.query(query, params);
-      return (result.rows || []).map((row) => row.source_id);
+      return this._extractCurrentCycleSourceIds(result.rows || [], poolSize);
     } catch (err) {
       console.error(`[QuestionSelectionService] Error listing recent guild question IDs: ${err.message}`);
       throw err;
@@ -67,12 +58,10 @@ export class QuestionSelectionService {
       }
 
       let query =
-        `select source_id
-         from (
-           select q.source_id as source_id, max(uh.delivered_at) as last_delivered_at
-           from user_question_history uh
-           join questions q on q.id = uh.question_id
-           where uh.user_id = $1 and q.question_set = $2`;
+        `select q.source_id as source_id
+         from user_question_history uh
+         join questions q on q.id = uh.question_id
+         where uh.user_id = $1 and q.question_set = $2`;
 
       const params = [userId, normalizedQuestionSet];
 
@@ -81,21 +70,46 @@ export class QuestionSelectionService {
         query += ` and q.difficulty = $${params.length}`;
       }
 
-      const cooldownWindowSize = Math.max(3, Math.ceil(poolSize / 4));
-      params.push(cooldownWindowSize);
-      query +=
-        `
-           group by q.source_id
-         ) recent_questions
-         order by last_delivered_at desc
-         limit $${params.length}`;
+      query += ' order by uh.delivered_at asc, uh.id asc';
 
       const result = await this.dbPool.query(query, params);
-      return (result.rows || []).map((row) => row.source_id);
+      return this._extractCurrentCycleSourceIds(result.rows || [], poolSize);
     } catch (err) {
       console.error(`[QuestionSelectionService] Error listing recent user question IDs: ${err.message}`);
       throw err;
     }
+  }
+
+  // Walks chronological delivery history and returns the source_ids that have
+  // already been delivered in the user's current cycle, ordered newest-first.
+  // A cycle is `poolSize` distinct deliveries; once a cycle fills, the next
+  // delivery starts a fresh one. Excluding these guarantees every question in
+  // the active set is delivered once before any can repeat.
+  _extractCurrentCycleSourceIds(rows, poolSize) {
+    if (!Array.isArray(rows) || rows.length === 0 || poolSize === 0) {
+      return [];
+    }
+
+    let cycleSet = new Set();
+    let cycleStartIdx = 0;
+    for (let i = 0; i < rows.length; i++) {
+      if (cycleSet.size >= poolSize) {
+        cycleSet = new Set();
+        cycleStartIdx = i;
+      }
+      cycleSet.add(Number(rows[i].source_id));
+    }
+
+    const seen = new Set();
+    const result = [];
+    for (let i = rows.length - 1; i >= cycleStartIdx; i--) {
+      const sourceId = Number(rows[i].source_id);
+      if (!seen.has(sourceId)) {
+        seen.add(sourceId);
+        result.push(sourceId);
+      }
+    }
+    return result;
   }
 
   async getQuestionPoolSize(questionSet, difficulty = DEFAULT_DIFFICULTY) {
