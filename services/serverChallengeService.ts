@@ -1,5 +1,6 @@
+// @ts-nocheck
 import { EmbedBuilder } from 'discord.js';
-import { getDateInTimezone, isDueAtMinute } from '../lib/time.js';
+import { getDateInTimezone, isDueAtMinute } from '../lib/time.ts';
 
 const ENCOURAGING_MESSAGES = [
   "Lock in and give this problem your full attention. You are getting sharper every day.",

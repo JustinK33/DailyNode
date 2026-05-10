@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { getDateInTimezone } from '../../lib/time.js';
+import { getDateInTimezone } from '../../lib/time.ts';
 
 export const data = new SlashCommandBuilder()
 	.setName('todayleetcode')

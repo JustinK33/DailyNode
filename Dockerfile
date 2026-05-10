@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy application files
 COPY . .
@@ -20,4 +20,4 @@ RUN if [ ! -f config.json ]; then echo '{"leetcodeChannelId":""}' > config.json;
 ENV NODE_ENV=production
 
 # Run the bot
-CMD ["node", "index.js"]
+CMD ["npm", "start"]

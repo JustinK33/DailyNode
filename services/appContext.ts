@@ -1,16 +1,16 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { runMigrations } from '../db/migrator.js';
-import { dbPool, verifyDatabaseConnection } from '../db/pool.js';
-import { QuestionCatalogService } from './questionCatalogService.js';
-import { QuestionSelectionService } from './questionSelectionService.js';
-import { ServerChallengeService } from './serverChallengeService.js';
-import { SettingsService } from './settingsService.js';
-import { UserChallengeService } from './userChallengeService.js';
-import { initializeServerDailyScheduler } from '../schedulers/serverDailyScheduler.js';
-import { initializeUserReminderScheduler } from '../schedulers/userReminderScheduler.js';
-import { startEventLoopMonitor } from '../utils/runtimeMonitor.js';
+import { runMigrations } from '../db/migrator.ts';
+import { dbPool, verifyDatabaseConnection } from '../db/pool.ts';
+import { QuestionCatalogService } from './questionCatalogService.ts';
+import { QuestionSelectionService } from './questionSelectionService.ts';
+import { ServerChallengeService } from './serverChallengeService.ts';
+import { SettingsService } from './settingsService.ts';
+import { UserChallengeService } from './userChallengeService.ts';
+import { initializeServerDailyScheduler } from '../schedulers/serverDailyScheduler.ts';
+import { initializeUserReminderScheduler } from '../schedulers/userReminderScheduler.ts';
+import { startEventLoopMonitor } from '../utils/runtimeMonitor.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

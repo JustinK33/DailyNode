@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { QUESTION_SET_VALUES } from '../../lib/constants.js';
+import { QUESTION_SET_VALUES } from '../../lib/constants.ts';
 
 const QUESTION_SET_LABELS = {
   blind75: 'Blind 75',

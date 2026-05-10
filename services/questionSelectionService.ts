@@ -1,9 +1,10 @@
+// @ts-nocheck
 import {
   DEFAULT_DIFFICULTY,
   DEFAULT_QUESTION_SET,
   normalizeDifficulty,
   normalizeQuestionSet
-} from '../lib/constants.js';
+} from '../lib/constants.ts';
 
 function randomItem(items) {
   return items[Math.floor(Math.random() * items.length)];

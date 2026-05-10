@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   DEFAULT_DIFFICULTY,
   DEFAULT_QUESTION_SET,
@@ -6,8 +7,8 @@ import {
   DEFAULT_USER_REMINDER_TIME,
   normalizeDifficulty,
   normalizeQuestionSet
-} from '../lib/constants.js';
-import { isValidTimeString, isValidTimezone } from '../lib/time.js';
+} from '../lib/constants.ts';
+import { isValidTimeString, isValidTimezone } from '../lib/time.ts';
 
 export class SettingsService {
   constructor(dbPool) {

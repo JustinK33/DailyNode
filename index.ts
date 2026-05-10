@@ -1,3 +1,4 @@
+// @ts-nocheck
 import dotenv from 'dotenv';
 dotenv.config()
 
@@ -5,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Client, GatewayIntentBits, Events, Collection, MessageFlags, ActivityType } from 'discord.js';
-import { createAppContext } from './services/appContext.js';
+import { createAppContext } from './services/appContext.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,7 +31,7 @@ async function loadCommands() {
 
     for (const folder of commandFolders) {
         const commandsPath = path.join(foldersPath, folder);
-        const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
+        const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.ts'));
 
         for (const file of commandFiles) {
             const filePath = path.join(commandsPath, file);

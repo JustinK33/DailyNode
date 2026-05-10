@@ -4,9 +4,9 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { QuestionCatalogService } from '../services/questionCatalogService.js';
-import { QuestionSelectionService } from '../services/questionSelectionService.js';
-import { UserChallengeService } from '../services/userChallengeService.js';
+import { QuestionCatalogService } from '../services/questionCatalogService.ts';
+import { QuestionSelectionService } from '../services/questionSelectionService.ts';
+import { UserChallengeService } from '../services/userChallengeService.ts';
 
 describe('QuestionSelectionService', () => {
   it('returns the current cycle deliveries newest-first for an in-progress cycle', async () => {

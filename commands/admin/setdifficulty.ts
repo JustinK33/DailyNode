@@ -1,5 +1,5 @@
 import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
-import { DIFFICULTY_VALUES } from '../../lib/constants.js';
+import { DIFFICULTY_VALUES } from '../../lib/constants.ts';
 
 export const data = new SlashCommandBuilder()
   .setName('setdifficulty')

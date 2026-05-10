@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { DEFAULT_TIMEZONE } from '../../lib/constants.js';
+import { DEFAULT_TIMEZONE } from '../../lib/constants.ts';
 
 export const data = new SlashCommandBuilder()
   .setName('remindme')

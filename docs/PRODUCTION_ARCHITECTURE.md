@@ -4,7 +4,7 @@
 
 DailyNode is split into four runtime layers:
 
-- `Discord Gateway Layer` (`index.js`, command handlers)
+- `Discord Gateway Layer` (`index.ts`, command handlers)
   - Handles slash command interactions and dispatches to services.
 - `Service Layer` (`services/*`)
   - `SettingsService` for guild/user persistence.
@@ -104,12 +104,12 @@ Compatibility commands retained:
 
 Scaffolded in this repo:
 
-- `db/` (`pool.js`, `migrator.js`, `migrations/001_initial.sql`)
-- `services/` (`appContext.js`, `settingsService.js`, `questionCatalogService.js`, `questionSelectionService.js`, `serverChallengeService.js`, `userChallengeService.js`)
-- `schedulers/` (`serverDailyScheduler.js`, `userReminderScheduler.js`)
+- `db/` (`pool.ts`, `migrator.ts`, `migrations/001_initial.sql`)
+- `services/` (`appContext.ts`, `settingsService.ts`, `questionCatalogService.ts`, `questionSelectionService.ts`, `serverChallengeService.ts`, `userChallengeService.ts`)
+- `schedulers/` (`serverDailyScheduler.ts`, `userReminderScheduler.ts`)
 - `commands/admin/*`
 - `commands/user/*`
-- `scripts/migrate.js`
+- `scripts/migrate.ts`
 
 Run:
 

@@ -9,8 +9,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 describe('Project Structure', () => {
   it('should have required files', () => {
     const requiredFiles = [
-      'index.js',
-      'deploy-commands.js',
+      'index.ts',
+      'deploy-commands.ts',
       'package.json',
       'Dockerfile',
       'docker-compose.yml'

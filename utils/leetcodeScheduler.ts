@@ -1,3 +1,4 @@
+// @ts-nocheck
 import cron from 'node-cron';
 import fs from 'node:fs';
 import path from 'node:path';

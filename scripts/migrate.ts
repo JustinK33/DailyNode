@@ -1,5 +1,5 @@
-import { runMigrations } from '../db/migrator.js';
-import { dbPool, verifyDatabaseConnection } from '../db/pool.js';
+import { runMigrations } from '../db/migrator.ts';
+import { dbPool, verifyDatabaseConnection } from '../db/pool.ts';
 
 (async () => {
   try {

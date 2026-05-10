@@ -1,6 +1,7 @@
+// @ts-nocheck
 import { EmbedBuilder } from 'discord.js';
-import { USER_HISTORY_SOURCE } from '../lib/constants.js';
-import { getDateInTimezone, isDueAtMinute } from '../lib/time.js';
+import { USER_HISTORY_SOURCE } from '../lib/constants.ts';
+import { getDateInTimezone, isDueAtMinute } from '../lib/time.ts';
 
 function buildQuestionEmbed(question, title, footerText) {
   return new EmbedBuilder()
