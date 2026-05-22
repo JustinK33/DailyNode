@@ -978,5 +978,75 @@
     "difficulty": "Medium",
     "category": "Bit Manipulation",
     "link": "https://leetcode.com/problems/reverse-integer/"
+  },
+  {
+    "id": 56,
+    "title": "Merge Intervals",
+    "difficulty": "Medium",
+    "category": "Intervals",
+    "link": "https://leetcode.com/problems/merge-intervals/"
+  },
+  {
+    "id": 57,
+    "title": "Insert Interval",
+    "difficulty": "Medium",
+    "category": "Intervals",
+    "link": "https://leetcode.com/problems/insert-interval/"
+  },
+  {
+    "id": 252,
+    "title": "Meeting Rooms",
+    "difficulty": "Easy",
+    "category": "Intervals",
+    "link": "https://leetcode.com/problems/meeting-rooms/"
+  },
+  {
+    "id": 253,
+    "title": "Meeting Rooms II",
+    "difficulty": "Medium",
+    "category": "Intervals",
+    "link": "https://leetcode.com/problems/meeting-rooms-ii/"
+  },
+  {
+    "id": 435,
+    "title": "Non-overlapping Intervals",
+    "difficulty": "Medium",
+    "category": "Intervals",
+    "link": "https://leetcode.com/problems/non-overlapping-intervals/"
+  },
+  {
+    "id": 1851,
+    "title": "Minimum Interval to Include Each Query",
+    "difficulty": "Hard",
+    "category": "Intervals",
+    "link": "https://leetcode.com/problems/minimum-interval-to-include-each-query/"
+  },
+  {
+    "id": 239,
+    "title": "Sliding Window Maximum",
+    "difficulty": "Hard",
+    "category": "Sliding Window",
+    "link": "https://leetcode.com/problems/sliding-window-maximum/"
+  },
+  {
+    "id": 567,
+    "title": "Permutation in String",
+    "difficulty": "Medium",
+    "category": "Sliding Window",
+    "link": "https://leetcode.com/problems/permutation-in-string/"
+  },
+  {
+    "id": 286,
+    "title": "Walls and Gates",
+    "difficulty": "Medium",
+    "category": "Graphs",
+    "link": "https://leetcode.com/problems/walls-and-gates/"
+  },
+  {
+    "id": 787,
+    "title": "Cheapest Flights Within K Stops",
+    "difficulty": "Medium",
+    "category": "Advanced Graphs",
+    "link": "https://leetcode.com/problems/cheapest-flights-within-k-stops/"
   }
 ]

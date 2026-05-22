@@ -1,7 +1,7 @@
 export const DIFFICULTY_VALUES = ['easy', 'medium', 'hard', 'mixed'];
 export const DEFAULT_DIFFICULTY = 'mixed';
 
-export const QUESTION_SET_VALUES = ['blind75', 'neetcode150', 'neetcode250'];
+export const QUESTION_SET_VALUES = ['blind75', 'neetcode150', 'neetcode250', 'all'];
 export const DEFAULT_QUESTION_SET = 'neetcode150';
 
 export const DEFAULT_SERVER_POST_TIME = '12:00';

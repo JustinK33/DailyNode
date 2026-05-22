@@ -47,6 +47,7 @@ describe('Question datasets', () => {
     'blind75.json',
     'neetcode150.json',
     'neetcode250.json',
+    'all.json',
   ];
 
   for (const file of expectedFiles) {

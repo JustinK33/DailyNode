@@ -12,6 +12,7 @@ const QUESTION_SET_LABEL = {
   blind75: 'Blind 75',
   neetcode150: 'NeetCode 150',
   neetcode250: 'NeetCode 250',
+  all: 'All Questions',
 };
 
 function colorFor(difficulty) {

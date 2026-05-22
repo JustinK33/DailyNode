@@ -5,6 +5,7 @@ const QUESTION_SET_LABELS = {
   blind75: 'Blind 75',
   neetcode150: 'NeetCode 150',
   neetcode250: 'NeetCode 250',
+  all: 'All Questions (252)',
 };
 
 export const data = new SlashCommandBuilder()

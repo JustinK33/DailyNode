@@ -19,6 +19,7 @@ const QUESTION_SET_FILES = [
   'blind75.json',
   'neetcode150.json',
   'neetcode250.json',
+  'all.json',
 ];
 
 export async function createAppContext(client) {
