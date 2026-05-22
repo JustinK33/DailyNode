@@ -7,7 +7,9 @@ export const data = new SlashCommandBuilder()
   .addStringOption((option) => {
     option
       .setName('difficulty')
-      .setDescription('Your personal difficulty for /practice, /myquestion, and reminders')
+      .setDescription(
+        'Your personal difficulty for /practice, /myquestion, and reminders'
+      )
       .setRequired(false);
 
     for (const value of DIFFICULTY_VALUES) {
@@ -21,21 +23,24 @@ export async function execute(interaction, appContext) {
   const difficulty = interaction.options.getString('difficulty', false);
 
   if (!difficulty) {
-    const settings = await appContext.services.settingsService.getUserSettings(interaction.user.id);
+    const settings = await appContext.services.settingsService.getUserSettings(
+      interaction.user.id
+    );
     await interaction.reply({
       content: `Your personal difficulty is **${settings.difficulty}**.`,
-      ephemeral: true
+      ephemeral: true,
     });
     return;
   }
 
-  const updated = await appContext.services.settingsService.upsertUserDifficulty(
-    interaction.user.id,
-    difficulty
-  );
+  const updated =
+    await appContext.services.settingsService.upsertUserDifficulty(
+      interaction.user.id,
+      difficulty
+    );
 
   await interaction.reply({
     content: `Your personal difficulty is now **${updated.difficulty}**.`,
-    ephemeral: true
+    ephemeral: true,
   });
 }

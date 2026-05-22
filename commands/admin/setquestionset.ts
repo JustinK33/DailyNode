@@ -4,7 +4,7 @@ import { QUESTION_SET_VALUES } from '../../lib/constants.ts';
 const QUESTION_SET_LABELS = {
   blind75: 'Blind 75',
   neetcode150: 'NeetCode 150',
-  neetcode250: 'NeetCode 250'
+  neetcode250: 'NeetCode 250',
 };
 
 export const data = new SlashCommandBuilder()
@@ -27,7 +27,7 @@ export async function execute(interaction, appContext) {
   if (!interaction.guild) {
     await interaction.reply({
       content: 'This command can only be used in a server.',
-      ephemeral: true
+      ephemeral: true,
     });
     return;
   }
@@ -36,7 +36,7 @@ export async function execute(interaction, appContext) {
   if (!interaction.member.permissions.has('ManageGuild')) {
     await interaction.reply({
       content: 'You need the **Manage Server** permission to use this command.',
-      ephemeral: true
+      ephemeral: true,
     });
     return;
   }
@@ -45,16 +45,21 @@ export async function execute(interaction, appContext) {
   const guildId = interaction.guild.id;
 
   try {
-    await appContext.services.settingsService.upsertGuildQuestionSet(guildId, questionSet);
+    await appContext.services.settingsService.upsertGuildQuestionSet(
+      guildId,
+      questionSet
+    );
 
     await interaction.reply({
-      content: `This server's question set is now **${QUESTION_SET_LABELS[questionSet]}**. Daily challenges will use this question set.`
+      content: `This server's question set is now **${QUESTION_SET_LABELS[questionSet]}**. Daily challenges will use this question set.`,
     });
   } catch (error) {
-    console.error(`[setquestionset] Error updating guild question set: ${error.message}`);
+    console.error(
+      `[setquestionset] Error updating guild question set: ${error.message}`
+    );
     await interaction.reply({
       content: 'Failed to update the question set. Please try again.',
-      ephemeral: true
+      ephemeral: true,
     });
   }
 }

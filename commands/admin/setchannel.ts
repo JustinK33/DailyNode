@@ -13,23 +13,29 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction, appContext) {
   if (!interaction.guildId) {
-    await interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
+    await interaction.reply({
+      content: 'This command can only be used in a server.',
+      ephemeral: true,
+    });
     return;
   }
 
   const channel = interaction.options.getChannel('channel', true);
 
   try {
-    await appContext.services.settingsService.upsertGuildChannel(interaction.guildId, channel.id);
+    await appContext.services.settingsService.upsertGuildChannel(
+      interaction.guildId,
+      channel.id
+    );
     await interaction.reply({
       content: `Daily questions for this server will post in ${channel}.`,
-      ephemeral: true
+      ephemeral: true,
     });
   } catch (error) {
     console.error('setchannel error:', error);
     await interaction.reply({
       content: 'Failed to save server channel setting. Please try again.',
-      ephemeral: true
+      ephemeral: true,
     });
   }
 }

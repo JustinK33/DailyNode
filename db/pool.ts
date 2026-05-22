@@ -7,7 +7,9 @@ const { Pool } = pg;
 
 function buildSslConfig(databaseUrl) {
   const forced = process.env.PGSSLMODE === 'require';
-  const fromConnectionString = String(databaseUrl || '').includes('sslmode=require');
+  const fromConnectionString = String(databaseUrl || '').includes(
+    'sslmode=require'
+  );
   const looksRemote = databaseUrl && !databaseUrl.includes('localhost');
 
   if (forced || fromConnectionString || looksRemote) {
@@ -69,7 +71,7 @@ export const dbPool = new Pool({
   ssl: buildSslConfig(connectionString),
   max: Number(process.env.DB_POOL_MAX || 20),
   idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT_MS || 30000),
-  connectionTimeoutMillis: Number(process.env.DB_CONNECT_TIMEOUT_MS || 10000)
+  connectionTimeoutMillis: Number(process.env.DB_CONNECT_TIMEOUT_MS || 10000),
 });
 
 export async function verifyDatabaseConnection() {

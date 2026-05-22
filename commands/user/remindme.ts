@@ -13,7 +13,9 @@ export const data = new SlashCommandBuilder()
   .addStringOption((option) =>
     option
       .setName('timezone')
-      .setDescription(`IANA timezone, e.g. America/New_York (default ${DEFAULT_TIMEZONE})`)
+      .setDescription(
+        `IANA timezone, e.g. America/New_York (default ${DEFAULT_TIMEZONE})`
+      )
       .setRequired(true)
   );
 
@@ -22,20 +24,21 @@ export async function execute(interaction, appContext) {
   const timezone = interaction.options.getString('timezone', true);
 
   try {
-    const settings = await appContext.services.settingsService.enableUserReminder(
-      interaction.user.id,
-      time,
-      timezone
-    );
+    const settings =
+      await appContext.services.settingsService.enableUserReminder(
+        interaction.user.id,
+        time,
+        timezone
+      );
 
     await interaction.reply({
       content: `Reminder enabled at **${settings.reminder_time}** in **${settings.timezone}**.`,
-      ephemeral: true
+      ephemeral: true,
     });
   } catch (error) {
     await interaction.reply({
       content: `Could not enable reminder: ${error.message}`,
-      ephemeral: true
+      ephemeral: true,
     });
   }
 }

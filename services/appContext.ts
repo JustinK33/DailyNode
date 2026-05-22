@@ -15,7 +15,11 @@ import { startEventLoopMonitor } from '../utils/runtimeMonitor.ts';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Question set files to load
-const QUESTION_SET_FILES = ['blind75.json', 'neetcode150.json', 'neetcode250.json'];
+const QUESTION_SET_FILES = [
+  'blind75.json',
+  'neetcode150.json',
+  'neetcode250.json',
+];
 
 export async function createAppContext(client) {
   const bootStart = Date.now();
@@ -23,16 +27,28 @@ export async function createAppContext(client) {
 
   const dbStart = Date.now();
   await verifyDatabaseConnection();
-  console.log(`[BOOT] Database connection verified in ${Date.now() - dbStart}ms.`);
+  console.log(
+    `[BOOT] Database connection verified in ${Date.now() - dbStart}ms.`
+  );
 
   const migrationStart = Date.now();
   await runMigrations();
-  console.log(`[BOOT] Migrations completed in ${Date.now() - migrationStart}ms.`);
+  console.log(
+    `[BOOT] Migrations completed in ${Date.now() - migrationStart}ms.`
+  );
 
   const settingsService = new SettingsService(dbPool);
   const questionSelectionService = new QuestionSelectionService(dbPool);
-  const serverChallengeService = new ServerChallengeService(settingsService, questionSelectionService, dbPool);
-  const userChallengeService = new UserChallengeService(settingsService, questionSelectionService, dbPool);
+  const serverChallengeService = new ServerChallengeService(
+    settingsService,
+    questionSelectionService,
+    dbPool
+  );
+  const userChallengeService = new UserChallengeService(
+    settingsService,
+    questionSelectionService,
+    dbPool
+  );
 
   // Sync all question sets
   const catalogSyncStart = Date.now();
@@ -42,12 +58,17 @@ export async function createAppContext(client) {
   for (const filename of QUESTION_SET_FILES) {
     const datasetPath = path.join(dataDir, filename);
     try {
-      const questionCatalogService = new QuestionCatalogService(dbPool, datasetPath);
+      const questionCatalogService = new QuestionCatalogService(
+        dbPool,
+        datasetPath
+      );
       const syncInfo = await questionCatalogService.syncQuestionsFromFile();
       if (!syncInfo || typeof syncInfo.syncedCount !== 'number') {
         throw new Error('Invalid sync response');
       }
-      console.log(`[BOOT] Synced ${syncInfo.syncedCount} questions from ${filename} (question_set: ${syncInfo.questionSet})`);
+      console.log(
+        `[BOOT] Synced ${syncInfo.syncedCount} questions from ${filename} (question_set: ${syncInfo.questionSet})`
+      );
       totalSynced += syncInfo.syncedCount;
     } catch (err) {
       console.error(`[BOOT] Error syncing ${filename}: ${err.message}`);
@@ -61,10 +82,12 @@ export async function createAppContext(client) {
 
   const schedulers = {
     serverDaily: initializeServerDailyScheduler(client, serverChallengeService),
-    userReminder: initializeUserReminderScheduler(client, userChallengeService)
+    userReminder: initializeUserReminderScheduler(client, userChallengeService),
   };
 
-  console.log(`[BOOT] Application context ready in ${Date.now() - bootStart}ms.`);
+  console.log(
+    `[BOOT] Application context ready in ${Date.now() - bootStart}ms.`
+  );
 
   return {
     dbPool,
@@ -72,8 +95,8 @@ export async function createAppContext(client) {
       settingsService,
       questionSelectionService,
       serverChallengeService,
-      userChallengeService
+      userChallengeService,
     },
-    schedulers
+    schedulers,
   };
 }

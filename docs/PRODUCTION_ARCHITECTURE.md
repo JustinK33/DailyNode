@@ -82,21 +82,26 @@ Compatibility commands retained:
 ## 5) Implementation plan in phases
 
 1. `Phase 1: Persistence`
+
 - Add PostgreSQL pool and SQL migrations.
 - Add startup migration runner.
 
 2. `Phase 2: Services`
+
 - Implement settings, question sync/selection, and history services.
 
 3. `Phase 3: Scheduling`
+
 - Split server scheduler and user reminder scheduler.
 - Add timezone/time due checks.
 
 4. `Phase 4: Commands`
+
 - Add admin and user command handlers.
 - Keep legacy compatibility commands.
 
 5. `Phase 5: Hardening`
+
 - Add retries, metrics, and dashboard observability.
 - Add history-based anti-repeat algorithm and rate-limit controls.
 

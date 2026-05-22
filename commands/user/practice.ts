@@ -5,10 +5,10 @@ export const data = new SlashCommandBuilder()
   .setDescription('Get a practice problem based on your personal difficulty');
 
 export async function execute(interaction, appContext) {
-  const question = await appContext.services.userChallengeService.getPracticeQuestion(interaction.user.id);
+  const { embed } =
+    await appContext.services.userChallengeService.getPracticeQuestion(
+      interaction.user.id
+    );
 
-  await interaction.reply({
-    embeds: [appContext.services.userChallengeService.createPracticeEmbed(question)],
-    ephemeral: true
-  });
+  await interaction.reply({ embeds: [embed], ephemeral: true });
 }

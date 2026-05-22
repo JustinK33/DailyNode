@@ -6,7 +6,7 @@ import {
   DEFAULT_TIMEZONE,
   DEFAULT_USER_REMINDER_TIME,
   normalizeDifficulty,
-  normalizeQuestionSet
+  normalizeQuestionSet,
 } from '../lib/constants.ts';
 import { isValidTimeString, isValidTimezone } from '../lib/time.ts';
 
@@ -34,10 +34,12 @@ export class SettingsService {
         post_time: DEFAULT_SERVER_POST_TIME,
         timezone: DEFAULT_TIMEZONE,
         created_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
       };
     } catch (err) {
-      console.error(`[SettingsService] Error fetching guild settings for ${guildId}: ${err.message}`);
+      console.error(
+        `[SettingsService] Error fetching guild settings for ${guildId}: ${err.message}`
+      );
       throw err;
     }
   }
@@ -59,7 +61,9 @@ export class SettingsService {
 
       return result.rows[0];
     } catch (err) {
-      console.error(`[SettingsService] Error upserting guild channel for ${guildId}: ${err.message}`);
+      console.error(
+        `[SettingsService] Error upserting guild channel for ${guildId}: ${err.message}`
+      );
       throw err;
     }
   }
@@ -82,7 +86,9 @@ export class SettingsService {
 
       return result.rows[0];
     } catch (err) {
-      console.error(`[SettingsService] Error upserting guild difficulty for ${guildId}: ${err.message}`);
+      console.error(
+        `[SettingsService] Error upserting guild difficulty for ${guildId}: ${err.message}`
+      );
       throw err;
     }
   }
@@ -112,7 +118,9 @@ export class SettingsService {
 
       return result.rows[0];
     } catch (err) {
-      console.error(`[SettingsService] Error upserting guild schedule for ${guildId}: ${err.message}`);
+      console.error(
+        `[SettingsService] Error upserting guild schedule for ${guildId}: ${err.message}`
+      );
       throw err;
     }
   }
@@ -124,7 +132,9 @@ export class SettingsService {
       );
       return result.rows || [];
     } catch (err) {
-      console.error(`[SettingsService] Error listing guild settings: ${err.message}`);
+      console.error(
+        `[SettingsService] Error listing guild settings: ${err.message}`
+      );
       throw err;
     }
   }
@@ -148,10 +158,12 @@ export class SettingsService {
         reminder_time: DEFAULT_USER_REMINDER_TIME,
         timezone: DEFAULT_TIMEZONE,
         created_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
       };
     } catch (err) {
-      console.error(`[SettingsService] Error fetching user settings for ${userId}: ${err.message}`);
+      console.error(
+        `[SettingsService] Error fetching user settings for ${userId}: ${err.message}`
+      );
       throw err;
     }
   }
@@ -175,7 +187,9 @@ export class SettingsService {
 
       return result.rows[0];
     } catch (err) {
-      console.error(`[SettingsService] Error upserting user difficulty for ${userId}: ${err.message}`);
+      console.error(
+        `[SettingsService] Error upserting user difficulty for ${userId}: ${err.message}`
+      );
       throw err;
     }
   }
@@ -209,7 +223,9 @@ export class SettingsService {
 
       return result.rows[0];
     } catch (err) {
-      console.error(`[SettingsService] Error enabling user reminder for ${userId}: ${err.message}`);
+      console.error(
+        `[SettingsService] Error enabling user reminder for ${userId}: ${err.message}`
+      );
       throw err;
     }
   }
@@ -231,7 +247,9 @@ export class SettingsService {
 
       return result.rows[0];
     } catch (err) {
-      console.error(`[SettingsService] Error disabling user reminder for ${userId}: ${err.message}`);
+      console.error(
+        `[SettingsService] Error disabling user reminder for ${userId}: ${err.message}`
+      );
       throw err;
     }
   }
@@ -243,7 +261,9 @@ export class SettingsService {
       );
       return result.rows || [];
     } catch (err) {
-      console.error(`[SettingsService] Error listing users with reminders enabled: ${err.message}`);
+      console.error(
+        `[SettingsService] Error listing users with reminders enabled: ${err.message}`
+      );
       throw err;
     }
   }
@@ -266,7 +286,9 @@ export class SettingsService {
 
       return result.rows[0];
     } catch (err) {
-      console.error(`[SettingsService] Error upserting guild question set for ${guildId}: ${err.message}`);
+      console.error(
+        `[SettingsService] Error upserting guild question set for ${guildId}: ${err.message}`
+      );
       throw err;
     }
   }
@@ -289,7 +311,9 @@ export class SettingsService {
 
       return result.rows[0];
     } catch (err) {
-      console.error(`[SettingsService] Error upserting user question set for ${userId}: ${err.message}`);
+      console.error(
+        `[SettingsService] Error upserting user question set for ${userId}: ${err.message}`
+      );
       throw err;
     }
   }

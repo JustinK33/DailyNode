@@ -16,7 +16,9 @@ export function startEventLoopMonitor() {
 
   const resolutionMs = Number(process.env.EVENT_LOOP_RESOLUTION_MS || 20);
   const intervalMs = Number(process.env.EVENT_LOOP_REPORT_INTERVAL_MS || 30000);
-  const warnThresholdMs = Number(process.env.EVENT_LOOP_WARN_THRESHOLD_MS || 250);
+  const warnThresholdMs = Number(
+    process.env.EVENT_LOOP_WARN_THRESHOLD_MS || 250
+  );
 
   const histogram = monitorEventLoopDelay({ resolution: resolutionMs });
   histogram.enable();
@@ -26,7 +28,9 @@ export function startEventLoopMonitor() {
     const maxMs = Number(histogram.max / 1e6).toFixed(1);
 
     if (Number(p95Ms) >= warnThresholdMs) {
-      console.warn(`[RUNTIME] Event loop lag high: p95=${p95Ms}ms max=${maxMs}ms`);
+      console.warn(
+        `[RUNTIME] Event loop lag high: p95=${p95Ms}ms max=${maxMs}ms`
+      );
     } else {
       console.log(`[RUNTIME] Event loop lag: p95=${p95Ms}ms max=${maxMs}ms`);
     }

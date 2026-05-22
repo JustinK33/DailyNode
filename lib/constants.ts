@@ -11,15 +11,23 @@ export const DEFAULT_TIMEZONE = 'America/New_York';
 export const USER_HISTORY_SOURCE = {
   DM_REMINDER: 'dm-reminder',
   PRACTICE: 'practice',
-  MY_QUESTION: 'myquestion'
+  MY_QUESTION: 'myquestion',
 };
 
 export function normalizeDifficulty(value) {
-  const normalized = String(value || '').trim().toLowerCase();
-  return DIFFICULTY_VALUES.includes(normalized) ? normalized : DEFAULT_DIFFICULTY;
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
+  return DIFFICULTY_VALUES.includes(normalized)
+    ? normalized
+    : DEFAULT_DIFFICULTY;
 }
 
 export function normalizeQuestionSet(value) {
-  const normalized = String(value || '').trim().toLowerCase();
-  return QUESTION_SET_VALUES.includes(normalized) ? normalized : DEFAULT_QUESTION_SET;
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
+  return QUESTION_SET_VALUES.includes(normalized)
+    ? normalized
+    : DEFAULT_QUESTION_SET;
 }

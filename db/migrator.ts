@@ -45,7 +45,9 @@ export async function runMigrations() {
     try {
       await client.query('begin');
       await client.query(sql);
-      await client.query('insert into schema_migrations (name) values ($1)', [file]);
+      await client.query('insert into schema_migrations (name) values ($1)', [
+        file,
+      ]);
       await client.query('commit');
       console.log(`✅ Applied migration: ${file}`);
     } catch (error) {
@@ -61,5 +63,7 @@ export async function runMigrations() {
     console.log('⚠️ No migration files found.');
   }
 
-  console.log(`[BOOT] Migration scan/apply completed in ${Date.now() - migrationStart}ms.`);
+  console.log(
+    `[BOOT] Migration scan/apply completed in ${Date.now() - migrationStart}ms.`
+  );
 }

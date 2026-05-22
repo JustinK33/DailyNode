@@ -5,78 +5,70 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.join(__dirname, '..');
 
 describe('Project Structure', () => {
-  it('should have required files', () => {
+  it('has required files', () => {
     const requiredFiles = [
       'index.ts',
       'deploy-commands.ts',
       'package.json',
       'Dockerfile',
-      'docker-compose.yml'
+      'docker-compose.yml',
     ];
 
-    requiredFiles.forEach(file => {
-      const filePath = path.join(__dirname, '..', file);
-      assert.ok(fs.existsSync(filePath), `${file} should exist`);
-    });
-  });
-
-  it('should have commands directory', () => {
-    const commandsPath = path.join(__dirname, '..', 'commands');
-    assert.ok(fs.existsSync(commandsPath), 'commands directory should exist');
-  });
-
-  it('should have utils directory', () => {
-    const utilsPath = path.join(__dirname, '..', 'utils');
-    assert.ok(fs.existsSync(utilsPath), 'utils directory should exist');
-  });
-
-  it('should have data directory', () => {
-    const dataPath = path.join(__dirname, '..', 'data');
-    assert.ok(fs.existsSync(dataPath), 'data directory should exist');
-  });
-});
-
-describe('LeetCode Data', () => {
-  it('should have neetcode150.json', () => {
-    const leetcodePath = path.join(__dirname, '..', 'data', 'neetcode150.json');
-    assert.ok(fs.existsSync(leetcodePath), 'neetcode150.json should exist');
-  });
-
-  it('should have valid JSON in neetcode150.json', () => {
-    const leetcodePath = path.join(__dirname, '..', 'data', 'neetcode150.json');
-    const data = JSON.parse(fs.readFileSync(leetcodePath, 'utf8'));
-    assert.ok(Array.isArray(data), 'leetcode data should be an array');
-    assert.ok(data.length > 0, 'leetcode data should not be empty');
-  });
-
-  it('should have properly formatted neetcode problems with valid links', () => {
-    const leetcodePath = path.join(__dirname, '..', 'data', 'neetcode150.json');
-    const data = JSON.parse(fs.readFileSync(leetcodePath, 'utf8'));
-    
-    data.forEach((problem, index) => {
-      assert.ok(problem.id, `Problem at index ${index} should have an id`);
-      assert.ok(problem.title, `Problem at index ${index} should have a title`);
-      assert.ok(problem.difficulty, `Problem at index ${index} should have a difficulty`);
-      assert.ok(problem.link, `Problem at index ${index} should have a link`);
+    for (const file of requiredFiles) {
       assert.ok(
-        typeof problem.link === 'string' && problem.link.startsWith('https://leetcode.com/problems/'),
-        `Problem at index ${index} should link to a LeetCode problem`
+        fs.existsSync(path.join(projectRoot, file)),
+        `${file} should exist`
       );
-    });
+    }
+  });
+
+  it('has the expected top-level directories', () => {
+    for (const dir of [
+      'commands',
+      'services',
+      'schedulers',
+      'db',
+      'data',
+      'lib',
+    ]) {
+      assert.ok(
+        fs.existsSync(path.join(projectRoot, dir)),
+        `${dir} directory should exist`
+      );
+    }
   });
 });
 
-describe('Configuration', () => {
-  it('should have config.json', () => {
-    const configPath = path.join(__dirname, '..', 'config.json');
-    assert.ok(fs.existsSync(configPath), 'config.json should exist');
-  });
+describe('Question datasets', () => {
+  const expectedFiles = [
+    'blind75.json',
+    'neetcode150.json',
+    'neetcode250.json',
+  ];
 
-  it('should have valid JSON in config.json', () => {
-    const configPath = path.join(__dirname, '..', 'config.json');
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    assert.ok(typeof config === 'object', 'config should be an object');
-  });
+  for (const file of expectedFiles) {
+    it(`has a well-formed ${file}`, () => {
+      const filePath = path.join(projectRoot, 'data', file);
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      assert.ok(Array.isArray(data), `${file} should be an array`);
+      assert.ok(data.length > 0, `${file} should not be empty`);
+
+      for (const problem of data) {
+        assert.ok(problem.id, `${file}: each problem should have an id`);
+        assert.ok(problem.title, `${file}: each problem should have a title`);
+        assert.ok(
+          problem.difficulty,
+          `${file}: each problem should have a difficulty`
+        );
+        assert.ok(
+          typeof problem.link === 'string' &&
+            problem.link.startsWith('https://leetcode.com/problems/'),
+          `${file}: every problem should link to a LeetCode problem`
+        );
+      }
+    });
+  }
 });

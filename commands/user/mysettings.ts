@@ -5,14 +5,20 @@ export const data = new SlashCommandBuilder()
   .setDescription('Show your personal DailyNode settings');
 
 export async function execute(interaction, appContext) {
-  const settings = await appContext.services.settingsService.getUserSettings(interaction.user.id);
+  const settings = await appContext.services.settingsService.getUserSettings(
+    interaction.user.id
+  );
 
   const embed = new EmbedBuilder()
     .setColor('#3498DB')
     .setTitle('Your DailyNode Settings')
     .addFields(
       { name: 'Difficulty', value: settings.difficulty, inline: true },
-      { name: 'Reminders Enabled', value: settings.reminder_enabled ? 'Yes' : 'No', inline: true },
+      {
+        name: 'Reminders Enabled',
+        value: settings.reminder_enabled ? 'Yes' : 'No',
+        inline: true,
+      },
       { name: 'Reminder Time', value: settings.reminder_time, inline: true },
       { name: 'Timezone', value: settings.timezone, inline: false }
     )

@@ -2,11 +2,17 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+const ALLOWED_DIFFICULTIES = new Set(['easy', 'medium', 'hard']);
+
 function dedupeQuestionsById(questions) {
   const seenIds = new Set();
 
   return questions.filter((question) => {
-    if (!question || typeof question.id === 'undefined' || question.id === null) {
+    if (
+      !question ||
+      typeof question.id === 'undefined' ||
+      question.id === null
+    ) {
       return false;
     }
 
@@ -38,38 +44,48 @@ export class QuestionCatalogService {
 
   // Extract question_set from filename (e.g., "blind75.json" -> "blind75")
   getQuestionSetFromPath() {
-    const basename = path.basename(this.datasetPath, '.json');
-    return basename;
+    return path.basename(this.datasetPath, '.json');
   }
 
   async syncQuestionsFromFile() {
     const questions = await this.loadDataset();
     const questionSet = this.getQuestionSetFromPath();
     let syncedCount = 0;
+    let skippedCount = 0;
 
     for (const question of questions) {
-      const normalizedDifficulty = String(question.difficulty || '').toLowerCase();
+      const normalizedDifficulty = String(
+        question.difficulty || ''
+      ).toLowerCase();
 
-      if (!['easy', 'medium', 'hard'].includes(normalizedDifficulty)) {
+      if (!ALLOWED_DIFFICULTIES.has(normalizedDifficulty)) {
+        skippedCount += 1;
         continue;
       }
 
+      // Composite uniqueness on (source_id, question_set) lets the same problem
+      // belong to multiple sets without one sync wiping another's label.
       await this.dbPool.query(
         `insert into questions (source_id, title, difficulty, link, question_set)
          values ($1, $2, $3, $4, $5)
-         on conflict (source_id)
+         on conflict (source_id, question_set)
          do update set
            title = excluded.title,
            difficulty = excluded.difficulty,
            link = excluded.link,
-           question_set = excluded.question_set,
            updated_at = now()`,
-        [question.id, question.title, normalizedDifficulty, question.link, questionSet]
+        [
+          question.id,
+          question.title,
+          normalizedDifficulty,
+          question.link,
+          questionSet,
+        ]
       );
 
       syncedCount += 1;
     }
 
-    return { syncedCount, questionSet };
+    return { syncedCount, skippedCount, questionSet };
   }
 }

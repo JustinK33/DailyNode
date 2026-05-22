@@ -5,10 +5,12 @@ export const data = new SlashCommandBuilder()
   .setDescription('Disable your DM reminders');
 
 export async function execute(interaction, appContext) {
-  await appContext.services.settingsService.disableUserReminder(interaction.user.id);
+  await appContext.services.settingsService.disableUserReminder(
+    interaction.user.id
+  );
 
   await interaction.reply({
     content: 'Your DM reminders are now disabled.',
-    ephemeral: true
+    ephemeral: true,
   });
 }
