@@ -36,13 +36,13 @@ Required in `.env`:
 **`services/appContext.ts`** is the boot orchestrator. On startup it:
 
 1. Verifies DB connection and runs SQL migrations (`db/migrator.ts`)
-2. Syncs three question datasets from `data/` (blind75, neetcode150, neetcode250) into the `questions` table via `QuestionCatalogService`
+2. Syncs four question datasets from `data/` (blind75, neetcode150, neetcode250, all) into the `questions` table via `QuestionCatalogService`
 3. Instantiates all services and wires them together
 4. Starts two `node-cron` schedulers
 
 **Service layer** (`services/`):
 
-- `QuestionCatalogService` — loads JSON question files into the DB. Upserts on `(source_id, question_set)` so the same LeetCode problem can be a member of multiple sets (blind75, neetcode150, neetcode250) without one sync overwriting another's label.
+- `QuestionCatalogService` — loads JSON question files into the DB. Upserts on `(source_id, question_set)` so the same LeetCode problem can be a member of multiple sets (blind75, neetcode150, neetcode250, all) without one sync overwriting another's label.
 - `QuestionSelectionService` — picks questions for users/guilds. Entry point is `selectForScope({ kind: 'guild'|'user', id }, settings)` which returns `{ question, poolSize, unusedCountBefore, cycleNumber, startedNewCycle, filter, ... }`. Algorithm: build the eligible pool from settings, walk the chronological delivery history to reconstruct the current cycle (a cycle = `poolSize` distinct deliveries), pick uniformly from unused entries; on cycle exhaustion, start a new cycle and exclude yesterday's pick when at least one alternative exists.
 - `ServerChallengeService` — manages per-guild daily posts; on each cron tick, checks if a guild's `post_time` matches local time, then routes through `selectForScope` and `buildChallengeEmbed`.
 - `UserChallengeService` — same shape per-user (`/myquestion`, `/practice`, DM reminders). Public methods return `{ question, embed }`.
