@@ -116,3 +116,7 @@ npm test
 ```
 
 `scripts/simulate.ts` drives the selection service over many days without Discord or a scheduler, which is the fastest way to see whether a change to the picker still holds the no-repeat guarantee.
+
+## License
+
+MIT, see LICENSE.
